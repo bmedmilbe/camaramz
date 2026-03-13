@@ -32,7 +32,6 @@ urlpatterns = [
     path("fly/", include("fly.urls")),
     path("troca/", include("troca.urls")),
     path("ground/", include("ground.urls")),
-    path("boleia/", include("boleia.urls")),
     path("bespoketour/", include("bespoketour.urls")),
 
     path("setup/", include("setup.urls")),
