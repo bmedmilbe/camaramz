@@ -30,7 +30,6 @@ INSTALLED_APPS = [
     "cecab",
     "fly",
     "ground",
-    "boleia",
     "bespoketour",
     "setup",
     "core",
