@@ -26,7 +26,6 @@ INSTALLED_APPS = [
     "certificates",
     "cmz",
     "troca",
-    "store",
     "ormed",
     "cecab",
     "fly",
