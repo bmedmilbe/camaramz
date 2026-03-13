@@ -25,7 +25,6 @@ urlpatterns = [
     path("", include("core.urls")),
     path("admin/", admin.site.urls),
     path("certificates/", include("certificates.urls")),
-    # path("blog/", include("blog.urls")),
     path("cmz/", include("cmz.urls")),
     path("ormed/", include("ormed.urls")),
     path("cecab/", include("cecab.urls")),
