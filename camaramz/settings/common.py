@@ -41,6 +41,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",  
     "django.middleware.security.SecurityMiddleware",
+    "core.middleware.TenantMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware", # Handles local static files
     "django.middleware.common.CommonMiddleware",
@@ -81,7 +82,6 @@ TENANT_MODEL = "core.Tenant"
 
 AUTHENTICATION_BACKENDS = [
     'core.backends.TenantEmailOrPhoneBackend',
-    'django.contrib.auth.backends.ModelBackend',
 ]
 
 # --- INTERNATIONALIZATION ---
@@ -122,7 +122,7 @@ CORS_ALLOW_HEADERS = [
     "x-csrftoken",
     "x-requested-with",
     "credentials",    
-    "tenant",         
+    "x-tenant-id"
     ]
 
 CSRF_COOKIE_HTTPONLY = False  
@@ -155,6 +155,7 @@ DJOSER = {
         "user_create": "core.serializers.UserCreateSerializer",
         "user": "core.serializers.UserSerializer",
         "current_user": "core.serializers.UserSerializer",
+        "token_create": "core.serializers.TenantTokenObtainPairSerializer",
         "set_password_retype": "core.serializers.SetPasswordRetypeSerializer",
         "set_username": "core.serializers.SetUsernameSerializer",
         "password_reset": "core.serializers.SendEmailResetSerializer",

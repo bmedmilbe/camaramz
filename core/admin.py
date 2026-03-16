@@ -13,8 +13,10 @@ class ContentTypeAdmin(admin.ModelAdmin):
 
 @admin.register(models.User)
 class UserAdmin(admin.ModelAdmin):
-    list_display = ["first_name", "last_name", 'email', 'username']
+    list_display = ["id", "first_name", "last_name", 'email', 'tenant']
     search_fields = ["first_name", "last_name",]
+    list_editable = ['tenant']
+    autocomplete_fields = ['tenant']
 
     def get_search_results(self, request, queryset, search_term):
         # Customize the queryset here (e.g., additional filtering)
@@ -36,3 +38,4 @@ class UserAdmin(admin.ModelAdmin):
 @admin.register(models.Tenant)
 class TenantAdmin(admin.ModelAdmin):
     list_display = ["id", "name"]
+    search_fields = ['name']

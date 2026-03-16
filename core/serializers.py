@@ -20,24 +20,24 @@ User = get_user_model()
 class UserCreateSerializer(UserCreateSerializer):
     class Meta(UserCreateSerializer.Meta):
         model = User
-        fields = ('id', 'username', 'email', 'phone', 'password', 'tenant', 'partner')
+        fields = ('id', 'username', 'email', 'phone', 'password', 'partner')
         validators = []
 
     def validate(self, attrs):
+        request = self.context.get('request')
+        tenant = getattr(request, 'tenant', None)
+
+        if not tenant:
+            raise serializers.ValidationError(
+                {"detail": "X-Tenant-ID header is missing or invalid."}
+            )
+
         # 1. Extract values from the data
         email = attrs.get('email')
-        username = phone = attrs.get('phone')
-        tenant = attrs.get('tenant')
+        phone = attrs.get('phone')
         
-        if phone == '':
-            attrs['phone'] = None
-            phone=None
-
-        if email == '':
-            attrs['email'] = None
-            email = None
-        else:
-            username = email
+        if phone == '' or phone == None: attrs['phone'] = None
+        if email == '' or email == None: attrs['email'] = None
 
         # 2. Logic: Require at least one (as requested previously)
         if not email and not phone:
@@ -59,12 +59,12 @@ class UserCreateSerializer(UserCreateSerializer):
                     {"phone": ["An user with this phone number already exists in this tenant."]}
                 )
 
-        attrs['username'] = f"{tenant.id}_{username}"
+        attrs['tenant'] = tenant
+        username_base = email if email else phone
+        attrs['username'] = f"{tenant.id}_{username_base}"
 
         return super().validate(attrs)
     
-
-
 class UserSerializer(UserSerializer):
     class Meta:
         model = User
@@ -123,6 +123,18 @@ class SetUsernameSerializer(SetUsernameSerializer):
 
 
 class TenantTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        request = self.context.get('request')
+        tenant = getattr(request, 'tenant', None)
+        if not tenant:
+            raise serializers.ValidationError(
+                {"detail": "X-Tenant-ID header is missing or invalid."}
+            )
+
+        data = super().validate(attrs)
+        
+        return data
+    
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
