@@ -23,7 +23,7 @@ class User(AbstractUser):
     email = models.EmailField(blank=True, null=True) 
     phone = models.CharField(max_length=15, blank=True, null=True)
     
-    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, null=True)
+    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, null=True, blank=True)
     valid = models.BooleanField(default=False)
     partner = models.IntegerField(null=True, blank=True) 
 
