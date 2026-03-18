@@ -123,7 +123,6 @@ class Command(BaseCommand):
                 picture=old_front_post.picture, tenant_id=t_id
             )
             self.copy_s3_file(old_front_post.picture, new_post.picture)
-            self.copy_s3_file(old_front_post.text_file, new_post.text_file)
             new_post.save()
 
     def migrate_cecab(self, t_id):
