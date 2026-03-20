@@ -49,3 +49,5 @@ docker-compose.yml
 backup_before_cleanup.sql
 backupo.sql
 backup-18.sql
+django_python_skills.txt
+backup-20.sql
