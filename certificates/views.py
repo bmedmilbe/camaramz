@@ -233,7 +233,9 @@ class CertificateViewSet(
         'secondary_person__birth_address__birth_county__country',
         'secondary_person__birth_address__birth_country',
         'secondary_person__address__street__town__county__country',
-        'secondary_person__address__street__county__country',                                          ).order_by("-id")
+        'secondary_person__address__street__county__country').order_by("-id")
+    
+    
     pagination_class = PageNumberPagination
     permission_classes = [IsStaff]
     filter_backends = [filters.SearchFilter, DjangoFilterBackend, filters.OrderingFilter]

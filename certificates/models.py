@@ -188,18 +188,16 @@ class Instituition(models.Model):
     def __str__(self) -> str:
         return f"{self.name}"
 
-
 class Person(models.Model):
     id = models.AutoField(primary_key=True)
-
-    name = models.CharField(max_length=255)
-    surname = models.CharField(max_length=255, default="", null=True)
-    birth_date = models.DateField(
-        null=True, blank=True)
+    name = models.TextField()
+    surname = models.TextField(db_index=True)
+    id_number = models.TextField(db_index=True)
+    
+    birth_date = models.DateField(null=True, blank=True, db_index=True)
     birth_day = models.IntegerField(null=True)
     birth_month = models.IntegerField(null=True)
     birth_year = models.IntegerField(null=True)
-
 
     bi_nasc_loc = models.IntegerField(null=True)
     birth_address = models.ForeignKey(
@@ -207,13 +205,12 @@ class Person(models.Model):
 
     id_type = models.ForeignKey(IDType, on_delete=models.PROTECT)
 
-    id_number = models.CharField(max_length=255)
     id_issue_local = models.ForeignKey(
         Instituition, on_delete=models.PROTECT, related_name="id_issue_person")
     id_issue_country = models.ForeignKey(
         Country, on_delete=models.PROTECT, related_name="id_issue_person", null=True)
     
-    id_issue_date = models.DateField(null=True)
+    id_issue_date = models.DateField(null=True, db_index=True)
     id_issue_day = models.IntegerField(null=True, default=1)
     id_issue_month = models.IntegerField(null=True, default=1)
     id_issue_year = models.IntegerField(null=True, default=1)
@@ -222,8 +219,8 @@ class Person(models.Model):
     nationality = models.ForeignKey(
         Country, on_delete=models.PROTECT, related_name="person_nationality", null=True)
 
-    father_name = models.CharField(max_length=255, null=True)
-    mother_name = models.CharField(max_length=255, null=True)
+    father_name = models.TextField(null=True)
+    mother_name = models.TextField(null=True)
 
     address = models.ForeignKey(
         House, on_delete=models.PROTECT, related_name='person', null=True)
@@ -244,8 +241,9 @@ class Person(models.Model):
     bi_estado = models.IntegerField(null=True)
     bi_sexo = models.IntegerField(null=True)
 
-    status = models.CharField(
-        max_length=1, choices=MARRITIAL_STATUS_CHOICES, null=True
+    # Kept TextField here to match your request, but limited by choices
+    status = models.TextField(
+        choices=MARRITIAL_STATUS_CHOICES, null=True
     )
 
     GENDER_MALE = "M"
@@ -254,9 +252,15 @@ class Person(models.Model):
         (GENDER_MALE, "Male"),
         (GENDER_FEMALE, "Female"),
     ]
-    gender = models.CharField(
-        max_length=1, choices=GENDER_CHOICES, null=True
+    gender = models.TextField(
+        choices=GENDER_CHOICES, null=True
     )
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['name', 'surname']),
+        ]
+
 
     def clean(self):
         super().clean()
@@ -321,45 +325,48 @@ class CertificateTitle(models.Model):
 
 
 class Certificate(models.Model):
-
-    
     id = models.AutoField(primary_key=True)
 
     type = models.ForeignKey(
-        CertificateTitle, on_delete=models.PROTECT, null=True)
-    number = models.CharField(max_length=255, null=True)
-    date_issue = models.DateTimeField(auto_now=True, null=True)
-    text = models.TextField(default="", null=True)
-    main_person = models.ForeignKey(
-        Person, on_delete=models.PROTECT, related_name="main_person_certificates", null=True)
-    secondary_person = models.ForeignKey(
-        Person, on_delete=models.PROTECT, null=True, related_name="second_person_certificates")
-    house = models.ForeignKey(
-        House, on_delete=models.PROTECT, related_name="certificates", null=True)
-    file = models.FileField(
-        upload_to='camaramz/certificates', null=True, blank=True)
-
-    STATUS_COMPLETED = "C"
-    STATUS_FAILD = "F"
-    STATUS_PENDENT = "P"
-    STATUS_REVIEWED = "R"
-    STATUS_ARCHIVED = "A"
-    STATUS_CHOICES = [
-        (STATUS_COMPLETED, "Concluído"),
-        (STATUS_FAILD, "Incorrecto"),
-        (STATUS_PENDENT, "Pendente"),
-        (STATUS_REVIEWED, "Revisto"),
-        (STATUS_ARCHIVED, "Archived"),
-    ]
-
-    status = models.CharField(
-        max_length=1, choices=STATUS_CHOICES, default=STATUS_PENDENT, null=True
+        'CertificateTitle', on_delete=models.PROTECT, null=True, db_index=True)
+    
+    number = models.TextField(null=True, db_index=True)
+    
+    status = models.TextField(
+        choices=[
+            ("C", "Concluído"),
+            ("F", "Incorrecto"),
+            ("P", "Pendente"),
+            ("R", "Revisto"),
+            ("A", "Archived"),
+        ], 
+        default="P", 
+        null=True,
+        db_index=True 
     )
 
+    date_issue = models.DateTimeField(auto_now=True, null=True, db_index=True)
+    
+    text = models.TextField(default="", null=True)
+    
+    main_person = models.ForeignKey(
+        'Person', on_delete=models.PROTECT, related_name="main_person_certificates", null=True)
+    secondary_person = models.ForeignKey(
+        'Person', on_delete=models.PROTECT, null=True, related_name="second_person_certificates")
+    house = models.ForeignKey(
+        'House', on_delete=models.PROTECT, related_name="certificates", null=True)
+    
+    file = models.FileField(upload_to='camaramz/certificates', null=True, blank=True)
     obs = models.TextField(null=True)
 
     atestado_state = models.IntegerField(null=True, default=1)
     type_id1 = models.IntegerField(null=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['number', 'status']),
+        ]
+
 
     def __str__(self) -> str:
         return f"{self.type.name} {self.number}"
