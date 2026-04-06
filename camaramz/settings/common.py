@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 from datetime import timedelta
-
+import socket
 # --- PATHS ---
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -33,10 +33,12 @@ INSTALLED_APPS = [
     "core",
     "storages",
     "mail_templated",
+    "debug_toolbar",
 ]
 
 # --- MIDDLEWARE ---
 MIDDLEWARE = [
+      "debug_toolbar.middleware.DebugToolbarMiddleware",
     "corsheaders.middleware.CorsMiddleware",  
     "django.middleware.security.SecurityMiddleware",
     "core.middleware.TenantMiddleware",
@@ -48,6 +50,12 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+INTERNAL_IPS = [
+    "127.0.0.1",
+]
+hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
+INTERNAL_IPS += [ip[:-1] + "1" for ip in ips]
 
 # --- TEMPLATES ---
 TEMPLATES = [

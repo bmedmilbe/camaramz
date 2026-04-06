@@ -685,7 +685,6 @@ class InstituitionSerializer(ModelSerializer):
 
 
 class PersonSerializer(ModelSerializer):
-    # Residence certificate
     birth_address = PersonBirthAddressSerializer()
     address = HouseSerializer()
     id_type = IDTypeSerializer()
