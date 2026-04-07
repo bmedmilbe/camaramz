@@ -1,7 +1,14 @@
 from django.db import models
 from django.conf import settings
+from django.db.models import Prefetch
+
+class AsssociationQuerySet(models.QuerySet):
+    def optimized(self):
+        return self.select_related('district', 'tenant').prefetch_related('cms_images')
+
 
 class Association(models.Model):
+    objects = AsssociationQuerySet.as_manager()
     name = models.CharField(max_length=255)  
     registered = models.DateField()
     address = models.CharField(max_length=255)  
@@ -15,6 +22,7 @@ class Association(models.Model):
     
     def __str__(self) -> str:
         return f'{self.name}'
+    
 
 class AssociationImages(models.Model):
     associaton = models.ForeignKey(
@@ -117,10 +125,17 @@ class Partner(models.Model):
         settings.TENANT_MODEL, on_delete=models.CASCADE, related_name="cms_partner")
     def __str__(self) -> str:
         return f'{self.title}'
+    
+class PostQuerySet(models.QuerySet):
+    def optimized(self):
+        return self.select_related('user__tenant', 'tenant')\
+            .prefetch_related( 'post_images', 'post_videos', 'cms_files', 'documents', 'informations')
+                
 
 class Post(models.Model):
+    objects = PostQuerySet.as_manager()
     title = models.CharField(max_length=255)
-    slug = models.SlugField(max_length=255, null=True)
+    slug = models.SlugField(max_length=255, db_index=True)
     picture = models.FileField(upload_to='mt_api/cms/posts/images/')
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name="cms_posts", blank=True)
     text_file = models.FileField(upload_to='mt_api/cms/posts/documents/', null=True,  max_length=500, blank=True)
@@ -132,7 +147,7 @@ class Post(models.Model):
     is_social_service = models.BooleanField(default=False)
     is_to_front=models.BooleanField(default=False)
     description = models.TextField(default="Através desse seviço, estarás habilitado para ...", null=True, blank=True)
-
+    text = models.TextField(null=True, blank=True) 
     tenant = models.ForeignKey(
         settings.TENANT_MODEL, on_delete=models.CASCADE, related_name="cms_posts")
     def __str__(self) -> str:
@@ -201,6 +216,10 @@ class Team(models.Model):
         unique_together = ['name', 'role', 'tenant']
     def __str__(self) -> str:
         return f'{self.name} - {self.role}'
+
+class TourQuerySet(models.QuerySet):
+    def optimized(self):
+        return self.select_related('tenant').prefetch_related('cms_images')
 
 class Tour(models.Model):
     title = models.CharField(max_length=255)

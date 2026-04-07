@@ -73,7 +73,7 @@ class AssociationViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, views
     serializer_class = AssociationSerializer
 
     def get_queryset(self):
-        return Association.objects.filter(tenant=self.request.tenant).select_related('district').order_by('name')
+        return Association.objects.optimized().filter(tenant=self.request.tenant).order_by('name')
 
 
 # Association Images ViewSet
@@ -214,11 +214,7 @@ class PostViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.Gen
     serializer_class = PostSerializer
 
     def get_queryset(self):
-        return Post.objects.filter(tenant=self.request.tenant).select_related(
-            'user'
-        ).prefetch_related(
-            'documents', 'cms_files', 'post_images', 'post_videos'
-        ).order_by('-date')
+        return Post.objects.optimized().filter(tenant=self.request.tenant).order_by('-date')
 
 
 # PostDocument ViewSet

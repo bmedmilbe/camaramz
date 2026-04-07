@@ -100,7 +100,10 @@ def generate_processed_json(post):
         # Save beginning as description if not already set
         if not post.description or post.description.startswith("Através desse seviço"):
             post.description = beginning
-            Post.objects.filter(pk=post.pk).update(description=beginning)
+
+            Post.objects.filter(pk=post.pk).update(description=beginning, text=processed_text)
+        else:
+            Post.objects.filter(pk=post.pk).update(text=processed_text)
         
         # Create file name
         file_name = f"processed_{post.slug}_{post.id}.json"

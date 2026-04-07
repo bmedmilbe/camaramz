@@ -282,16 +282,14 @@ class PostSimpleSerializer(serializers.ModelSerializer):
 class PostSerializer(serializers.ModelSerializer):
     beginning = serializers.SerializerMethodField(method_name="get_beginning")
     posted_at = serializers.SerializerMethodField(method_name="get_posted_at")
-    text = serializers.SerializerMethodField(method_name="get_text")
-    next = serializers.SerializerMethodField(method_name="get_next")
-    prev = serializers.SerializerMethodField(method_name="get_prev")
+    text = serializers.CharField(read_only=True)
     post_images = PostImageSerializer(many=True, read_only=True)
     user = serializers.StringRelatedField(read_only=True)
     
     class Meta:
         model = Post
         fields = ['id', 'title', 'slug', 'picture', 'user', 'post_images', 
-                  'beginning', 'text', 'posted_at', 'date', 'next', 'prev']
+                  'beginning', 'text', 'posted_at', 'date']
     
     def get_posted_at(self, post: Post):
         """Return time ago format for post date."""
@@ -304,41 +302,9 @@ class PostSerializer(serializers.ModelSerializer):
             return post.description
         return ""
     
-    def get_text(self, post: Post):
-        """
-        Return processed HTML text from generated JSON file.
-        Falls back to processing DOCX if JSON not available.
-        """
-        try:
-            # Try to get processed JSON first
-            if post.processed_text_file:
-                try:
-                    # Read the JSON file
-                    json_content = post.processed_text_file.read().decode('utf-8')
-                    processed_data = json.loads(json_content)
-                    return processed_data.get('text', '')
-                except Exception as e:
-                    print(f"Error reading processed JSON: {e}")
-            
-            # Fallback: return empty if no file
-            return ""
-        except Exception as e:
-            print(f"Error getting text: {e}")
-            return ""
     
-    def get_prev(self, post: Post):
-        """Get previous post slug."""
-        obj = Post.objects.filter(id__lt=post.id).order_by('-id')
-        if obj.exists():
-            return obj.first().slug
-        return None
     
-    def get_next(self, post: Post):
-        """Get next post slug."""
-        obj = Post.objects.filter(id__gt=post.id).order_by('id')
-        if obj.exists():
-            return obj.first().slug
-        return None
+   
 
 
 class PostCreateUpdateSerializer(serializers.ModelSerializer):
