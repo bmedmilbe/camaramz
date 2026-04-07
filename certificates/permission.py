@@ -13,4 +13,4 @@ class IsStaff(BasePermission):
             return False
 
         # Ensure the user has an active Customer record flagged as backstaff
-        return Customer.objects.select_related('user__tenant').filter(user_id=request.user.id, backstaff=True).exists()
+        return Customer.objects.optimized().filter(user_id=request.user.id, backstaff=True).exists()

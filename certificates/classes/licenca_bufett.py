@@ -15,7 +15,7 @@ class LicencaBufett(Document):
         data = self.data
 
         # user
-        simple_days = CertificateDate.objects.filter(type_id=data.type2.id)
+        simple_days = CertificateDate.objects.optimized().filter(type_id=data.type2.id)
 
         simple_days_text = StringHelper.ext_days(
             StringHelper, simple_days.order_by("date__year", "date__month", "date__day"))

@@ -46,6 +46,12 @@ from .models import (
     Town,
     University,
 )
+def get_extra_kwargs(fields):
+    return {
+        field: {'style': {'base_template': 'input.html'}}
+        for field in fields 
+        if field not in['id', 'file']
+    }
 
 class CustomerSerializer(ModelSerializer):
     first_name = serializers.SerializerMethodField(method_name="get_first_name")
@@ -96,10 +102,11 @@ class CountyCreateSerializer(ModelSerializer):
     class Meta:
         model = County
         fields = ["id", "name", "country"]
+        extra_kwargs = get_extra_kwargs(fields)
 
     def create(self, validate_data):
         name = validate_data.get('name')
-        object_list = County.objects.filter(name=name)
+        object_list = County.objects.optimized().filter(name=name)
         if object_list:
             return object_list.first()
         validate_data['slug'] = helpers.slugify(validate_data.get('name'))
@@ -109,7 +116,7 @@ class CountyCreateSerializer(ModelSerializer):
         name = validate_data.get('name')
         slug = validate_data['slug'] = helpers.slugify(name)
         country = validate_data['country']
-        object = County.objects.filter(slug=slug, country=country)
+        object = County.objects.optimized().filter(slug=slug, country=country)
         if not object:
             return super().update(instance, validate_data)
         return object.first()  
@@ -147,10 +154,11 @@ class TownCreateSerializer(ModelSerializer):
     class Meta:
         model = Town
         fields = ["id", "name", "county"]
+        extra_kwargs = get_extra_kwargs(fields)
 
     def create(self, validate_data):
         name = validate_data.get('name')
-        object_list = Town.objects.filter(name=name)
+        object_list = Town.objects.optimized().filter(name=name)
         if object_list:
             return object_list.first()
         validate_data['slug'] = helpers.slugify(validate_data.get('name'))
@@ -160,7 +168,7 @@ class TownCreateSerializer(ModelSerializer):
         name = validate_data.get('name')
         slug = validate_data['slug'] = helpers.slugify(name)
         county = validate_data['county']
-        object = Town.objects.filter(slug=slug, county=county)
+        object = Town.objects.optimized().filter(slug=slug, county=county)
         if not object:
             return super().update(instance, validate_data)
         return object.first()  
@@ -190,11 +198,13 @@ class StreetCreateSerializer(ModelSerializer):
     class Meta:
         model = Street
         fields = ["id", "name", "town"]
+        extra_kwargs = get_extra_kwargs(fields)
+
 
     def create(self, validate_data):
         name = validate_data.get('name')
         town = validate_data.get('town')
-        object_list = Street.objects.filter(name=name, town=town)
+        object_list = Street.objects.optimized().filter(name=name, town=town)
         if object_list:
             return object_list.first()
         return super().create(validate_data)
@@ -216,10 +226,11 @@ class HouseCreateSerializer(ModelSerializer):
     class Meta:
         model = House
         fields = ["id", "house_number", "street"]
+        extra_kwargs = get_extra_kwargs(fields)
 
     def create(self, validate_data):
         house_number = validate_data.get('house_number')
-        house = House.objects.filter(
+        house = House.objects.optimized().filter(
             house_number=house_number,
             street_id=validate_data['street']
         )
@@ -271,7 +282,7 @@ def get_number(current_year, certificates, instance, type_id):
         return instance.number
     last_obj = None
     if last != None:
-        items = Certificate.objects.filter(type__certificate_type__id = last.type.certificate_type.id, date_issue__year=current_year, number__endswith=current_year)
+        items = Certificate.objects.optimized().filter(type__certificate_type__id = last.type.certificate_type.id, date_issue__year=current_year, number__endswith=current_year)
         if items.exists():
             items = [item for item in items.values()]
             last_obj = sorted(items, key=lambda item:int(item['number'].replace("-","") ), reverse=True)[0]
@@ -280,10 +291,10 @@ def get_number(current_year, certificates, instance, type_id):
     return f"1-{current_year}"
 
 def set_number(current_year, type_id):
-    last = CertificateTitle.objects.get(id=type_id)
+    last = CertificateTitle.objects.optimized().get(id=type_id)
     last_obj = None
     if last != None:
-        items = Certificate.objects.filter(type__certificate_type__id = last.certificate_type.id, date_issue__year=current_year, number__endswith=current_year)
+        items = Certificate.objects.optimized().filter(type__certificate_type__id = last.certificate_type.id, date_issue__year=current_year, number__endswith=current_year)
         if items.exists():
             items = [item for item in items.values()]
             last_obj = sorted(items, key=lambda item:int(item['number'].replace("-","") ), reverse=True)[0]
@@ -292,9 +303,9 @@ def set_number(current_year, type_id):
     return f"1-{current_year}"
 
 class PersonBirthAddressCreateSerializer(ModelSerializer):
-    birth_street = serializers.PrimaryKeyRelatedField(queryset=Street.objects.all(), required=False, allow_null=True)
-    birth_town = serializers.PrimaryKeyRelatedField(queryset=Town.objects.all(), required=False, allow_null=True)
-    birth_county = serializers.PrimaryKeyRelatedField(queryset=County.objects.all(), required=False, allow_null=True)
+    birth_street = serializers.PrimaryKeyRelatedField(queryset=Street.objects.optimized().all(), required=False, allow_null=True)
+    birth_town = serializers.PrimaryKeyRelatedField(queryset=Town.objects.optimized().all(), required=False, allow_null=True)
+    birth_county = serializers.PrimaryKeyRelatedField(queryset=County.objects.optimized().all(), required=False, allow_null=True)
     birth_country = serializers.PrimaryKeyRelatedField(queryset=Country.objects.all(), required=True) 
 
     class Meta:
@@ -310,7 +321,7 @@ class PersonBirthAddressCreateSerializer(ModelSerializer):
         town_id = town_instance.id if town_instance else None
         county_id = county_instance.id if county_instance else None
         country_id = country_instance.id
-        address = PersonBirthAddress.objects.filter(
+        address = PersonBirthAddress.objects.optimized().filter(
             birth_street=street_id,
             birth_town=town_id,
             birth_county=county_id,
@@ -329,9 +340,11 @@ class PersonCreateOrUpdateSerializer(ModelSerializer):
             "id_issue_date", "id_expire_date", "father_name", "mother_name",
             "address", "status", "gender",
         ]
+        extra_kwargs = get_extra_kwargs(fields)
+
 
     def create(self, validate_data):
-        person = Person.objects.filter(id_type=validate_data['id_type'], id_number=validate_data['id_number'])
+        person = Person.objects.optimized().filter(id_type=validate_data['id_type'], id_number=validate_data['id_number'])
         if not validate_data['father_name'] and not validate_data['mother_name']:
             raise serializers.ValidationError({"person": "The person must to have a father or mother"})
         if not person:
@@ -339,7 +352,7 @@ class PersonCreateOrUpdateSerializer(ModelSerializer):
         raise serializers.ValidationError({"person": "There is a person with same ID already registered"})
 
     def update(self, instance, validate_data):
-        person = Person.objects.filter(id=self.context['id'])
+        person = Person.objects.optimized().filter(id=self.context['id'])
         if not validate_data['father_name'] and not validate_data['mother_name']:
             raise serializers.ValidationError({"person": "The person must to have a father or mother"})
         if person.first().id == instance.id:
@@ -384,23 +397,26 @@ class PersonSerializer(ModelSerializer):
             "address", "status", "gender",
         ]
 
+
+
 class CertificateModelOneCreateSerializer(ModelSerializer):
     file = serializers.FileField(read_only=True)
     class Meta:
         model = Certificate
         fields = ["id", "main_person", "secondary_person", "house", "file"]
+        extra_kwargs = get_extra_kwargs(fields)
 
     @atomic()
     def update(self, instance, validated_data):
         current_year = date.today().year
-        certificates = Certificate.objects.filter(type_id=self.context['type_id'], date_issue__year=current_year)
+        certificates = Certificate.objects.optimized().filter(type_id=self.context['type_id'], date_issue__year=current_year)
         validated_data["number"] = get_number(current_year, certificates, instance, self.context['type_id'])
         validated_data["type_id"] = int(self.context['type_id'])
         certificate = super().update(instance, validated_data)
         model = AtestadoOne(DocumentData(validated_data["main_person"], validated_data, instance, validated_data["secondary_person"]))
         text, _, _ = StringHelper.renderText(model)
-        Certificate.objects.filter(pk=certificate.id).update(text=text, status="P")
-        CertificateData.objects.filter(pk=certificate.id).update(house=validated_data["main_person"].address)
+        Certificate.objects.optimized().filter(pk=certificate.id).update(text=text, status="P")
+        CertificateData.objects.optimized().filter(pk=certificate.id).update(house=validated_data["main_person"].address)
         return {**validated_data, "id": certificate.id, "file": certificate.file}
 
     @atomic()
@@ -412,15 +428,17 @@ class CertificateModelOneCreateSerializer(ModelSerializer):
         certificate = super().create(new_validate_data)
         model = AtestadoOne(DocumentData(validate_data["main_person"], validate_data, certificate, validate_data["secondary_person"]))
         text, _, _ = StringHelper.renderText(model)
-        Certificate.objects.filter(pk=certificate.id).update(text=text, status="P")
+        Certificate.objects.optimized().filter(pk=certificate.id).update(text=text, status="P")
         CertificateData.objects.create(certificate_id=certificate.id, house=validate_data["main_person"].address)
-        certificate = Certificate.objects.get(pk=certificate.id)
+        certificate = Certificate.objects.optimized().get(pk=certificate.id)
         return {**validate_data, "id": certificate.id, "file": certificate.file}
 
 class CertificateModelOneSerializer(ModelSerializer):
     class Meta:
         model = Certificate
         fields = ["id", "main_person", "secondary_person", "house_id", "file"]
+
+    
 
 class CertificateModelTwoCreateSerializer(ModelSerializer):
     instituition = serializers.IntegerField()
@@ -430,7 +448,7 @@ class CertificateModelTwoCreateSerializer(ModelSerializer):
     class Meta:
         model = Certificate
         fields = ["id", "main_person", "secondary_person", "house", "instituition", "university", "file"]
-
+        extra_kwargs = get_extra_kwargs(fields)
     def validate_institution(self, institution):
         if not institution:
             raise serializers.ValidationError({'institution': "Select instituition"})
@@ -446,7 +464,7 @@ class CertificateModelTwoCreateSerializer(ModelSerializer):
     @atomic()
     def update(self, instance, validated_data):                              
         current_year = date.today().year
-        certificates = Certificate.objects.filter(type_id=self.context['type_id'], date_issue__year=current_year)
+        certificates = Certificate.objects.optimized().filter(type_id=self.context['type_id'], date_issue__year=current_year)
         validated_data["number"] = get_number(current_year, certificates, instance, self.context['type_id'])
         type_id = validated_data["type_id"] = int(self.context['type_id'])
         validated_data["status"] = "P"
@@ -459,12 +477,12 @@ class CertificateModelTwoCreateSerializer(ModelSerializer):
             university = University.objects.filter(id=validated_data["university"]).first()
         model = AtestadoSecond(DocumentData(validated_data["main_person"], validated_data, instance, validated_data["secondary_person"]))
         text, _, _ = StringHelper.renderText(model)
-        Certificate.objects.filter(pk=certificate.id).update(text=text, status="P")
-        CertificateData.objects.filter(pk=certificate.id).update(house=validated_data["main_person"].address)
+        Certificate.objects.optimized().filter(pk=certificate.id).update(text=text, status="P")
+        CertificateData.objects.optimized().filter(pk=certificate.id).update(house=validated_data["main_person"].address)
+        certificate = Certificate.objects.optimized().get(pk=certificate.id)
         validated_data["instituition"] = instituition.id
         if type_id == 3:
             validated_data["university"] = university.id
-        certificate = Certificate.objects.get(pk=certificate.id)
         return {**validated_data, "id": certificate.id, "file": certificate.file}
 
     @atomic()
@@ -481,12 +499,12 @@ class CertificateModelTwoCreateSerializer(ModelSerializer):
             university = University.objects.filter(id=validate_data["university"]).first()
         model = AtestadoSecond(DocumentData(validate_data["main_person"], validate_data, certificate, validate_data["secondary_person"]))
         text, _, _ = StringHelper.renderText(model)
-        Certificate.objects.filter(pk=certificate.id).update(text=text, status="P")
+        Certificate.objects.optimized().filter(pk=certificate.id).update(text=text, status="P")
         CertificateData.objects.create(certificate_id=certificate.id, house=validate_data["main_person"].address)
+        certificate = Certificate.objects.optimized().get(pk=certificate.id)
         validate_data["instituition"] = instituition.id
         if type_id == 3:
             validate_data["university"] = university.id
-        certificate = Certificate.objects.get(pk=certificate.id)
         return {**validate_data, "id": certificate.id, "file": certificate.file}
 
 class CertificateModelTwoSerializer(ModelSerializer):
@@ -500,11 +518,12 @@ class CertificateModelThreeCreateSerializer(ModelSerializer):
     class Meta:
         model = Certificate
         fields = ["id", "main_person", "secondary_person", "house", "date", "file"]
+        extra_kwargs = get_extra_kwargs(fields)
 
     @atomic()
     def update(self, instance, validated_data):                              
         current_year = date.today().year
-        certificates = Certificate.objects.filter(type_id=self.context['type_id'], date_issue__year=current_year)
+        certificates = Certificate.objects.optimized().filter(type_id=self.context['type_id'], date_issue__year=current_year)
         validated_data["number"] = get_number(current_year, certificates, instance, self.context['type_id'])
         validated_data["type_id"] = int(self.context['type_id'])
         new_validate_data = validated_data.copy()
@@ -512,9 +531,9 @@ class CertificateModelThreeCreateSerializer(ModelSerializer):
         certificate = super().update(instance, new_validate_data)
         model = AtestadoThird(DocumentData(validated_data["main_person"], validated_data, instance, validated_data["secondary_person"]))
         text, _, _ = StringHelper.renderText(model)
-        Certificate.objects.filter(pk=certificate.id).update(text=text, status="P")
-        CertificateData.objects.filter(pk=certificate.id).update(house=validated_data["main_person"].address)
-        certificate = Certificate.objects.get(pk=certificate.id)
+        Certificate.objects.optimized().filter(pk=certificate.id).update(text=text, status="P")
+        CertificateData.objects.optimized().filter(pk=certificate.id).update(house=validated_data["main_person"].address)
+        certificate = Certificate.objects.optimized().get(pk=certificate.id)
         return {**validated_data, "id": certificate.id, "file": certificate.file}
 
     @atomic()
@@ -527,9 +546,9 @@ class CertificateModelThreeCreateSerializer(ModelSerializer):
         certificate = super().create(new_validate_data)
         model = AtestadoThird(DocumentData(validate_data["main_person"], validate_data, certificate, validate_data["secondary_person"]))
         text, _, _ = StringHelper.renderText(model)
-        Certificate.objects.filter(pk=certificate.id).update(text=text, status="P")
+        Certificate.objects.optimized().filter(pk=certificate.id).update(text=text, status="P")
         CertificateData.objects.create(certificate_id=certificate.id, house=validate_data["main_person"].address)
-        certificate = Certificate.objects.get(pk=certificate.id)
+        certificate = Certificate.objects.optimized().get(pk=certificate.id)
         return {**validate_data, "id": certificate.id, "file": certificate.file}
 
 class CertificateModelThreeSerializer(ModelSerializer):
@@ -545,7 +564,7 @@ class CertificateModelFifthCreateSerializer(ModelSerializer):
     class Meta:
         model = Certificate
         fields = ["id", "main_person", "secondary_person", "house", "instituition", "file"]
-
+        extra_kwargs = get_extra_kwargs(fields)
     def validate_institution(self, institution):
         if not institution:
             raise serializers.ValidationError({'institution': "Select instituition"})
@@ -556,7 +575,7 @@ class CertificateModelFifthCreateSerializer(ModelSerializer):
     @atomic()
     def update(self, instance, validated_data):
         current_year = date.today().year
-        certificates = Certificate.objects.filter(type_id=self.context['type_id'], date_issue__year=current_year)
+        certificates = Certificate.objects.optimized().filter(type_id=self.context['type_id'], date_issue__year=current_year)
         validated_data["number"] = get_number(current_year, certificates, instance, self.context['type_id'])
         validated_data["type_id"] = int(self.context['type_id'])
         validated_data["status"] = "P"
@@ -566,18 +585,18 @@ class CertificateModelFifthCreateSerializer(ModelSerializer):
         instituition = Instituition.objects.filter(id=validated_data["instituition"]).first()
         model = AtestadoFifth(DocumentData(validated_data["main_person"], validated_data, instance, validated_data["secondary_person"]))
         text, _, _ = StringHelper.renderText(model)
-        Certificate.objects.filter(pk=certificate.id).update(text=text, status="P")
-        CertificateData.objects.filter(pk=certificate.id).update(house=validated_data["main_person"].address)
+        Certificate.objects.optimized().filter(pk=certificate.id).update(text=text, status="P")
+        CertificateData.objects.optimized().filter(pk=certificate.id).update(house=validated_data["main_person"].address)
+        certificate = Certificate.objects.optimized().get(pk=certificate.id)
         validated_data["instituition"] = instituition.id
-        certificate = Certificate.objects.get(pk=certificate.id)
         return {**validated_data, "id": certificate.id, "file": certificate.file}
 
     @atomic()
     def create(self, validate_data):
         if int(self.context['type_id']) == 12:
-            if CertificateSimplePerson.objects.filter(type_id=12).count() == 0:
+            if CertificateSimplePerson.objects.optimized().filter(type_id=12).count() == 0:
                 raise serializers.ValidationError({'persons': "No simple persons"})
-            elif CertificateSinglePerson.objects.filter(type_id=12).count() == 0:
+            elif CertificateSinglePerson.objects.optimized().filter(type_id=12).count() == 0:
                 raise serializers.ValidationError({'persons': "No single person"})
         current_year = date.today().year
         validate_data["number"] = set_number(current_year, self.context['type_id'])
@@ -588,10 +607,10 @@ class CertificateModelFifthCreateSerializer(ModelSerializer):
         instituition = Instituition.objects.filter(id=validate_data["instituition"]).first()
         model = AtestadoFifth(DocumentData(validate_data["main_person"], validate_data, certificate, validate_data["secondary_person"]))
         text, _, _ = StringHelper.renderText(model)
-        Certificate.objects.filter(pk=certificate.id).update(text=text, status="P")
+        Certificate.objects.optimized().filter(pk=certificate.id).update(text=text, status="P")
         CertificateData.objects.create(certificate_id=certificate.id, house=validate_data["main_person"].address)
+        certificate = Certificate.objects.optimized().get(pk=certificate.id)
         validate_data["instituition"] = instituition.id
-        certificate = Certificate.objects.get(pk=certificate.id)
         return {**validate_data, "id": certificate.id, "file": certificate.file}
 
 class CertificateModelFifthSerializer(ModelSerializer):
@@ -623,18 +642,18 @@ class CertificateModelEnterroCreateSerializer(ModelSerializer):
     class Meta:
         model = Certificate
         fields = ["id", "main_person", "secondary_person", "cemiterio", "died_date", "entero_date", "file"]
-
+        extra_kwargs = get_extra_kwargs(fields)
     def validate_cemiterio(self, cemiterio):
         if not cemiterio:
             raise serializers.ValidationError({'cemiterio': "Select cemiterio"})
-        elif not Cemiterio.objects.filter(id=cemiterio).exists():
+        elif not Cemiterio.objects.optimized().filter(id=cemiterio).exists():
             raise serializers.ValidationError({'cemiterio': "This cemiterio is not valid"})
         return cemiterio
 
     @atomic()
     def update(self, instance, validated_data):
         current_year = date.today().year
-        certificates = Certificate.objects.filter(type_id=self.context['type_id'], date_issue__year=current_year)
+        certificates = Certificate.objects.optimized().filter(type_id=self.context['type_id'], date_issue__year=current_year)
         validated_data["number"] = get_number(current_year, certificates, instance, self.context['type_id'])
         type_id = validated_data["type_id"] = int(self.context['type_id'])
         validated_data["status"] = "P"
@@ -643,19 +662,19 @@ class CertificateModelEnterroCreateSerializer(ModelSerializer):
         del new_validate_data["died_date"]
         del new_validate_data["entero_date"]
         certificate = super().update(instance, new_validate_data)
-        cemiterio = Cemiterio.objects.filter(id=validated_data["cemiterio"]).first()
+        cemiterio = Cemiterio.objects.optimized().filter(id=validated_data["cemiterio"]).first()
         startdate = date.today()
-        covals = Coval.objects.filter(date_used__year__lt=(startdate.year - 1), closed=False, cemiterio=cemiterio).order_by("square", "date_used")
+        covals = Coval.objects.optimized().filter(date_used__year__lt=(startdate.year - 1), closed=False, cemiterio=cemiterio).order_by("square", "date_used")
         if not covals:
             raise serializers.ValidationError({'coval': 'There is no space'})
-        elif not CertificateSinglePerson.objects.filter(type_id=type_id).exists():
+        elif not CertificateSinglePerson.objects.optimized().filter(type_id=type_id).exists():
             raise serializers.ValidationError({'coval': 'You must add a single the died person details'})
-        coval = covals.first()
+        coval = covals.optimized().first()
         coval.closed = True
         coval.save()
-        person = CertificateSinglePerson.objects.get(type_id=type_id)
+        person = CertificateSinglePerson.objects.optimized().get(type_id=type_id)
         new_coval = {
-            'number': f"{covals.filter(square=coval.square).count()+1}-{startdate.year} {coval.square}",
+            'number': f"{covals.optimized().filter(square=coval.square).count()+1}-{startdate.year} {coval.square}",
             'nick_number': f"{coval.nick_number}",
             'name': f"{person.name}",
             'date_used': f"{validated_data['entero_date']}",
@@ -666,10 +685,10 @@ class CertificateModelEnterroCreateSerializer(ModelSerializer):
         Coval.objects.create(**new_coval)
         model = AutoEnterro(DocumentData(validated_data["main_person"], validated_data, instance, validated_data["secondary_person"]))
         text, _ = StringHelper.renderText(model)
-        Certificate.objects.filter(pk=instance.id).update(text=text, status="P")
-        CertificateData.objects.filter(pk=instance.id).update(house=validated_data["main_person"].address)
+        Certificate.objects.optimized().filter(pk=instance.id).update(text=text, status="P")
+        CertificateData.objects.optimized().filter(pk=instance.id).update(house=validated_data["main_person"].address)
         validated_data["cemiterio"] = cemiterio.id
-        certificate = Certificate.objects.get(pk=certificate.id)
+        certificate = Certificate.objects.optimized().get(pk=certificate.id)
         return {**validated_data, "id": certificate.id, "file": certificate.file}
 
     @atomic()
@@ -682,19 +701,19 @@ class CertificateModelEnterroCreateSerializer(ModelSerializer):
         del new_validate_data["died_date"]
         del new_validate_data["entero_date"]
         certificate = super().create(new_validate_data)
-        cemiterio = Cemiterio.objects.filter(id=validate_data["cemiterio"]).first()
+        cemiterio = Cemiterio.objects.optimized().filter(id=validate_data["cemiterio"]).first()
         startdate = date.today()
-        covals = Coval.objects.filter(date_used__year__lt=(startdate.year - 1), closed=False, cemiterio=cemiterio).order_by("square", "date_used")
+        covals = Coval.objects.optimized().filter(date_used__year__lt=(startdate.year - 1), closed=False, cemiterio=cemiterio).order_by("square", "date_used")
         if not covals:
             raise serializers.ValidationError({'coval': 'There is no space'})
-        elif not CertificateSinglePerson.objects.filter(type_id=type_id).exists():
+        elif not CertificateSinglePerson.objects.optimized().filter(type_id=type_id).exists():
             raise serializers.ValidationError({'coval': 'You must add a single the died person details'})
         coval = covals.first()
         coval.closed = True
         coval.save()
-        person = CertificateSinglePerson.objects.get(type_id=type_id)
+        person = CertificateSinglePerson.objects.optimized().get(type_id=type_id)
         new_coval = {
-            'number': f"{covals.filter(square=coval.square).count()+1}-{startdate.year} {coval.square}",
+            'number': f"{covals.optimized().filter(square=coval.square).count()+1}-{startdate.year} {coval.square}",
             'nick_number': f"{coval.nick_number}",
             'name': f"{person.name}",
             'date_used': f"{validate_data['entero_date']}",
@@ -705,10 +724,10 @@ class CertificateModelEnterroCreateSerializer(ModelSerializer):
         Coval.objects.create(**new_coval)
         model = AutoEnterro(DocumentData(validate_data["main_person"], validate_data, certificate, validate_data["secondary_person"]))
         text, _ = StringHelper.renderText(model)
-        Certificate.objects.filter(pk=certificate.id).update(text=text, status="P")
+        Certificate.objects.optimized().filter(pk=certificate.id).update(text=text, status="P")
         CertificateData.objects.create(certificate_id=certificate.id, house=validate_data["main_person"].address)
+        certificate = Certificate.objects.optimized().get(pk=certificate.id)
         validate_data["cemiterio"] = cemiterio.id
-        certificate = Certificate.objects.get(pk=certificate.id)
         return {**validate_data, "id": certificate.id, "file": certificate.file}
 
 class CertificateModelEnterroSerializer(ModelSerializer):
@@ -722,29 +741,30 @@ class CertificateModelCertCompraCovalCreateSerializer(ModelSerializer):
     class Meta:
         model = Certificate
         fields = ["id", "main_person", "secondary_person", "coval", "file"]
+        extra_kwargs = get_extra_kwargs(fields)
 
     def validate_coval(self, coval):
         if not coval:
             raise serializers.ValidationError("Select coval")
-        coval_obj = Coval.objects.filter(id=coval).first()
+        coval_obj = Coval.objects.optimized().filter(id=coval).first()
         if not coval_obj:
             raise serializers.ValidationError("This coval is not valid")
         if coval_obj.date_of_deth == None:
             raise serializers.ValidationError("Empty coval")
-        if CovalSalles.objects.filter(coval__id=coval).exists():
+        if CovalSalles.objects.optimized().filter(coval__id=coval).exists():
             raise serializers.ValidationError("Coval is selled")
         return coval
 
     @atomic()
     def update(self, instance, validated_data):
         current_year = date.today().year
-        certificates = Certificate.objects.filter(type_id=self.context['type_id'], date_issue__year=current_year)
+        certificates = Certificate.objects.optimized().filter(type_id=self.context['type_id'], date_issue__year=current_year)
         validated_data["number"] = get_number(current_year, certificates, instance, self.context['type_id'])
         type_id = int(self.context['type_id'])
         new_validate_data = validated_data.copy()
         del new_validate_data["coval"]
         certificate = super().update(instance, new_validate_data)
-        coval = Coval.objects.get(id=validated_data["coval"])
+        coval = Coval.objects.optimized().get(id=validated_data["coval"])
         model = None
         if type_id == 24:
             coval.selled = True
@@ -753,11 +773,11 @@ class CertificateModelCertCompraCovalCreateSerializer(ModelSerializer):
             model = CertCompraCoval(DocumentData(validated_data["main_person"], validated_data, instance, validated_data["secondary_person"]))
         elif type_id == 30:
             model = LicencaTransladacao(DocumentData(validated_data["main_person"], validated_data, instance, validated_data["secondary_person"]))
-        text, _ = StringHelper.renderText(model)
-        Certificate.objects.filter(pk=certificate.id).update(text=text, status="P")
-        CertificateData.objects.filter(pk=certificate.id).update(house=validated_data["main_person"].address)
+        text, _, _ = StringHelper.renderText(model)
+        Certificate.objects.optimized().filter(pk=certificate.id).update(text=text, status="P")
+        CertificateData.objects.optimized().filter(pk=certificate.id).update(house=validated_data["main_person"].address)
+        certificate = Certificate.objects.optimized().get(pk=certificate.id)
         validated_data["coval"] = coval.id
-        certificate = Certificate.objects.get(pk=certificate.id)
         return {**validated_data, "id": certificate.id, "file": certificate.file}
 
     @atomic()
@@ -768,7 +788,7 @@ class CertificateModelCertCompraCovalCreateSerializer(ModelSerializer):
         new_validate_data = validate_data.copy()
         del new_validate_data["coval"]
         certificate = super().create(new_validate_data)
-        coval = Coval.objects.get(id=validate_data["coval"])
+        coval = Coval.objects.optimized().get(id=validate_data["coval"])
         model = None
         if type_id == 24:
             coval.selled = True
@@ -778,10 +798,10 @@ class CertificateModelCertCompraCovalCreateSerializer(ModelSerializer):
         elif type_id == 30:
             model = LicencaTransladacao(DocumentData(validate_data["main_person"], validate_data, certificate, validate_data["secondary_person"]))
         text, _, _ = StringHelper.renderText(model)
-        Certificate.objects.filter(pk=certificate.id).update(text=text, status="P")
+        Certificate.objects.optimized().filter(pk=certificate.id).update(text=text, status="P")
         CertificateData.objects.create(certificate_id=certificate.id, house=validate_data["main_person"].address)
+        certificate = Certificate.objects.optimized().get(pk=certificate.id)
         validate_data["coval"] = coval.id
-        certificate = Certificate.objects.get(pk=certificate.id)
         return {**validate_data, "id": certificate.id, "file": certificate.file}
 
 class CertificateModelCertCompraCovalSerializer(ModelSerializer):
@@ -796,11 +816,12 @@ class CertificateModelAutoModCovalCreateSerializer(ModelSerializer):
     class Meta:
         model = Certificate
         fields = ["id", "main_person", "secondary_person", "coval", "change", "file"]
+        extra_kwargs = get_extra_kwargs(fields)
 
     def validate_coval(self, coval):
         if not coval:
             raise serializers.ValidationError({'coval': "Select coval"})
-        if not Coval.objects.filter(id=coval).exists():
+        if not Coval.objects.optimized().filter(id=coval).exists():
             raise serializers.ValidationError({'coval': "This coval is not valid"})
         return coval
 
@@ -814,7 +835,7 @@ class CertificateModelAutoModCovalCreateSerializer(ModelSerializer):
     @atomic()
     def update(self, instance, validated_data):                              
         current_year = date.today().year
-        certificates = Certificate.objects.filter(type_id=self.context['type_id'], date_issue__year=current_year)
+        certificates = Certificate.objects.optimized().filter(type_id=self.context['type_id'], date_issue__year=current_year)
         validated_data["number"] = get_number(current_year, certificates, instance, self.context['type_id'])
         validated_data["type_id"] = int(self.context['type_id'])
         validated_data["status"] = "P"
@@ -822,15 +843,15 @@ class CertificateModelAutoModCovalCreateSerializer(ModelSerializer):
         del new_validate_data["coval"]
         del new_validate_data["change"]
         certificate = super().update(instance, new_validate_data)
-        coval = Coval.objects.get(id=validated_data["coval"])
+        coval = Coval.objects.optimized().get(id=validated_data["coval"])
         change = Change.objects.get(id=validated_data["change"])
         model = AutoModCovalAndLicBarraca(DocumentData(validated_data["main_person"], validated_data, instance, validated_data["secondary_person"]))
         text, _, _ = StringHelper.renderText(model)
-        Certificate.objects.filter(pk=certificate.id).update(text=text, status="P")
-        CertificateData.objects.filter(pk=certificate.id).update(house=validated_data["main_person"].address)
+        Certificate.objects.optimized().filter(pk=certificate.id).update(text=text, status="P")
+        CertificateData.objects.optimized().filter(pk=certificate.id).update(house=validated_data["main_person"].address)
+        certificate = Certificate.objects.optimized().get(pk=certificate.id)
         validated_data["coval"] = coval.id
         validated_data["change"] = change.id
-        certificate = Certificate.objects.get(pk=certificate.id)
         return {**validated_data, "id": certificate.id, "file": certificate.file}
 
     @atomic()
@@ -842,15 +863,15 @@ class CertificateModelAutoModCovalCreateSerializer(ModelSerializer):
         del new_validate_data["coval"]
         del new_validate_data["change"]
         certificate = super().create(new_validate_data)
-        coval = Coval.objects.get(id=validate_data["coval"])
+        coval = Coval.objects.optimized().get(id=validate_data["coval"])
         change = Change.objects.get(id=validate_data["change"])
         model = AutoModCovalAndLicBarraca(DocumentData(validate_data["main_person"], validate_data, certificate, validate_data["secondary_person"]))
         text, _, _ = StringHelper.renderText(model)
-        Certificate.objects.filter(pk=certificate.id).update(text=text, status="P")
+        Certificate.objects.optimized().filter(pk=certificate.id).update(text=text, status="P")
         CertificateData.objects.create(certificate_id=certificate.id, house=validate_data["main_person"].address)
+        certificate = Certificate.objects.optimized().get(pk=certificate.id)
         validate_data["coval"] = coval.id
         validate_data["change"] = change.id
-        certificate = Certificate.objects.get(pk=certificate.id)
         return {**validate_data, "id": certificate.id, "file": certificate.file}
 
 class CertificateModelAutoModCovalSerializer(ModelSerializer):
@@ -866,7 +887,7 @@ class CertificateModelLicBarracaCreateSerializer(ModelSerializer):
     class Meta:
         model = Certificate
         fields = ["id", "main_person", "secondary_person", "object", "street", "file", "range"]
-
+        extra_kwargs = get_extra_kwargs(fields)
     def validate_object(self, object):
         if not object:
             raise serializers.ValidationError({'object': "Type the object"})
@@ -875,14 +896,14 @@ class CertificateModelLicBarracaCreateSerializer(ModelSerializer):
     def validate_street(self, street):
         if not street:
             raise serializers.ValidationError({'street': "Select street"})
-        if not Street.objects.filter(id=street).exists():
+        if not Street.objects.optimized().filter(id=street).exists():
             raise serializers.ValidationError({'street': "This street is not valid"})
         return street
 
     @atomic()
     def update(self, instance, validated_data):                              
         current_year = date.today().year
-        certificates = Certificate.objects.filter(type_id=self.context['type_id'], date_issue__year=current_year)
+        certificates = Certificate.objects.optimized().filter(type_id=self.context['type_id'], date_issue__year=current_year)
         validated_data["number"] = get_number(current_year, certificates, instance, self.context['type_id'])
         validated_data["type_id"] = int(self.context['type_id'])
         validated_data["status"] = "P"
@@ -891,15 +912,15 @@ class CertificateModelLicBarracaCreateSerializer(ModelSerializer):
         del new_validate_data["street"]
         del new_validate_data["range"]
         certificate = super().update(instance, new_validate_data)
-        street = Street.objects.get(id=validated_data["street"])
+        street = Street.objects.optimized().get(id=validated_data["street"])
         if validated_data["type_id"] == 27:
             validated_data["range"] = CertificateRange.objects.get(type=validated_data["range"])
         model = AutoModCovalAndLicBarraca(DocumentData(validated_data["main_person"], validated_data, certificate, validated_data["secondary_person"]))
         text, _, _ = StringHelper.renderText(model)
-        Certificate.objects.filter(pk=certificate.id).update(text=text, status="P")
-        CertificateData.objects.filter(pk=certificate.id).update(house=validated_data["main_person"].address)
+        Certificate.objects.optimized().filter(pk=certificate.id).update(text=text, status="P")
+        CertificateData.objects.optimized().filter(pk=certificate.id).update(house=validated_data["main_person"].address)
+        certificate = Certificate.objects.optimized().get(pk=certificate.id)
         validated_data["street"] = street.id
-        certificate = Certificate.objects.get(pk=certificate.id)
         return {**validated_data, "id": certificate.id, "file": certificate.file}
 
     @atomic()
@@ -912,15 +933,15 @@ class CertificateModelLicBarracaCreateSerializer(ModelSerializer):
         del new_validate_data["street"]
         del new_validate_data["range"]
         certificate = super().create(new_validate_data)
-        street = Street.objects.get(id=validate_data["street"])
+        street = Street.objects.optimized().get(id=validate_data["street"])
         if validate_data["type_id"] == 27:
             validate_data["range"] = CertificateRange.objects.get(type=validate_data["range"])
         model = AutoModCovalAndLicBarraca(DocumentData(validate_data["main_person"], validate_data, certificate, validate_data["secondary_person"]))
         text, _, _ = StringHelper.renderText(model)
-        Certificate.objects.filter(pk=certificate.id).update(text=text, status="P")
+        Certificate.objects.optimized().filter(pk=certificate.id).update(text=text, status="P")
         CertificateData.objects.create(certificate_id=certificate.id, house=validate_data["main_person"].address)
+        certificate = Certificate.objects.optimized().get(pk=certificate.id)
         validate_data["street"] = street.id
-        certificate = Certificate.objects.get(pk=certificate.id)
         return {**validate_data, "id": certificate.id, "file": certificate.file}
 
 class CertificateModelLicBarracaSerializer(ModelSerializer):
@@ -936,6 +957,8 @@ class CertificateModelAutoConstrucaoCreateSerializer(ModelSerializer):
         model = Certificate
         fields = ["id", "main_person", "secondary_person", "building_type", "street", "file"]
 
+        extra_kwargs = get_extra_kwargs(fields)
+        
     def validate_building_type(self, building_type):
         if not building_type:
             raise serializers.ValidationError({'building_type': "Select building_type"})
@@ -946,14 +969,14 @@ class CertificateModelAutoConstrucaoCreateSerializer(ModelSerializer):
     def validate_street(self, street):
         if not street:
             raise serializers.ValidationError({'street': "Select street"})
-        if not Street.objects.filter(id=street).exists():
+        if not Street.objects.optimized().filter(id=street).exists():
             raise serializers.ValidationError({'street': "This street is not valid"})
         return street
 
     @atomic()
     def update(self, instance, validated_data):                              
         current_year = date.today().year
-        certificates = Certificate.objects.filter(type_id=self.context['type_id'], date_issue__year=current_year)
+        certificates = Certificate.objects.optimized().filter(type_id=self.context['type_id'], date_issue__year=current_year)
         validated_data["number"] = get_number(current_year, certificates, instance, self.context['type_id'])
         validated_data["type_id"] = int(self.context['type_id'])
         validated_data["status"] = "P"
@@ -962,14 +985,14 @@ class CertificateModelAutoConstrucaoCreateSerializer(ModelSerializer):
         del new_validate_data["street"]
         certificate = super().update(instance, new_validate_data)
         building_type = BiuldingType.objects.get(id=validated_data["building_type"])
-        street = Street.objects.get(id=validated_data["street"])
+        street = Street.objects.optimized().get(id=validated_data["street"])
         model = AutoConstrucao(DocumentData(validated_data["main_person"], validated_data, instance, validated_data["secondary_person"]))
         text, _, _ = StringHelper.renderText(model)
-        Certificate.objects.filter(pk=instance.id).update(text=text, status="P")
-        CertificateData.objects.filter(pk=instance.id).update(house=validated_data["main_person"].address)
+        Certificate.objects.optimized().filter(pk=instance.id).update(text=text, status="P")
+        CertificateData.objects.optimized().filter(pk=instance.id).update(house=validated_data["main_person"].address)
         validated_data["building_type"] = building_type.id
         validated_data["street"] = street.id
-        certificate = Certificate.objects.get(pk=certificate.id)
+        certificate = Certificate.objects.optimized().get(pk=certificate.id)
         return {**validated_data, "id": certificate.id, "file": certificate.file}
 
     @atomic()
@@ -982,14 +1005,14 @@ class CertificateModelAutoConstrucaoCreateSerializer(ModelSerializer):
         del new_validate_data["street"]
         certificate = super().create(new_validate_data)
         building_type = BiuldingType.objects.get(id=validate_data["building_type"])
-        street = Street.objects.get(id=validate_data["street"])
+        street = Street.objects.optimized().get(id=validate_data["street"])
         model = AutoConstrucao(DocumentData(validate_data["main_person"], validate_data, certificate, validate_data["secondary_person"]))
         text, _, _ = StringHelper.renderText(model)
-        Certificate.objects.filter(pk=certificate.id).update(text=text, status="P")
+        Certificate.objects.optimized().filter(pk=certificate.id).update(text=text, status="P")
         CertificateData.objects.create(certificate_id=certificate.id, house=validate_data["main_person"].address)
+        certificate = Certificate.objects.optimized().get(pk=certificate.id)
         validate_data["building_type"] = building_type.id
         validate_data["street"] = street.id
-        certificate = Certificate.objects.get(pk=certificate.id)
         return {**validate_data, "id": certificate.id, "file": certificate.file}
 
 class CertificateModelAutoConstrucaoSerializer(ModelSerializer):
@@ -1004,11 +1027,12 @@ class CertificateModelSeventhCreateSerializer(ModelSerializer):
     class Meta:
         model = Certificate
         fields = ["id", "main_person", "secondary_person", "house", "years", "country", "file"]
-
+        extra_kwargs = get_extra_kwargs(fields)
+        
     @atomic()
     def update(self, instance, validated_data):                              
         current_year = date.today().year
-        certificates = Certificate.objects.filter(type_id=self.context['type_id'], date_issue__year=current_year)
+        certificates = Certificate.objects.optimized().filter(type_id=self.context['type_id'], date_issue__year=current_year)
         validated_data["number"] = get_number(current_year, certificates, instance, self.context['type_id'])
         validated_data["type_id"] = int(self.context['type_id'])
         validated_data["status"] = "P"
@@ -1019,10 +1043,10 @@ class CertificateModelSeventhCreateSerializer(ModelSerializer):
         country = Country.objects.filter(id=validated_data["country"]).first()
         model = AtestadoSeventh(DocumentData(validated_data["main_person"], validated_data, instance, validated_data["secondary_person"]))
         text, _, _ = StringHelper.renderText(model)
-        Certificate.objects.filter(pk=instance.id).update(text=text, status="P")
-        CertificateData.objects.filter(pk=instance.id).update(house=validated_data["main_person"].address)
+        Certificate.objects.optimized().filter(pk=instance.id).update(text=text, status="P")
+        CertificateData.objects.optimized().filter(pk=instance.id).update(house=validated_data["main_person"].address)
         validated_data["country"] = country.id if country else None
-        certificate = Certificate.objects.get(pk=certificate.id)
+        certificate = Certificate.objects.optimized().get(pk=certificate.id)
         return {**validated_data, "id": certificate.id, "file": certificate.file}
 
     @atomic()
@@ -1037,10 +1061,10 @@ class CertificateModelSeventhCreateSerializer(ModelSerializer):
         country = Country.objects.filter(id=validate_data["country"]).first()
         model = AtestadoSeventh(DocumentData(validate_data["main_person"], validate_data, certificate, validate_data["secondary_person"]))
         text, _, _ = StringHelper.renderText(model)
-        Certificate.objects.filter(pk=certificate.id).update(text=text, status="P")
+        Certificate.objects.optimized().filter(pk=certificate.id).update(text=text, status="P")
         CertificateData.objects.create(certificate_id=certificate.id, house=validate_data["main_person"].address)
+        certificate = Certificate.objects.optimized().get(pk=certificate.id)
         validate_data["country"] = country.id if country else None
-        certificate = Certificate.objects.get(pk=certificate.id)
         return {**validate_data, "id": certificate.id, "file": certificate.file}
 
 class CertificateModelSeventhSerializer(ModelSerializer):
@@ -1056,11 +1080,11 @@ class CertificateModelLicencaBuffetCreateSerializer(ModelSerializer):
     class Meta:
         model = Certificate
         fields = ["id", "main_person", "secondary_person", "infra", "street", "metros", "file"]
-
+        extra_kwargs = get_extra_kwargs(fields)
     @atomic()
     def update(self, instance, validated_data):                              
         current_year = date.today().year
-        certificates = Certificate.objects.filter(type_id=self.context['type_id'], date_issue__year=current_year)
+        certificates = Certificate.objects.optimized().filter(type_id=self.context['type_id'], date_issue__year=current_year)
         validated_data["number"] = get_number(current_year, certificates, instance, self.context['type_id'])
         type_id = validated_data["type_id"] = int(self.context['type_id'])
         validated_data["status"] = "P"
@@ -1069,15 +1093,15 @@ class CertificateModelLicencaBuffetCreateSerializer(ModelSerializer):
         del new_validate_data["street"]
         del new_validate_data["metros"]
         certificate = super().update(instance, new_validate_data)
-        street = Street.objects.filter(id=validated_data["street"]).first()
-        validated_data["last_date"] = CertificateDate.objects.filter(type_id=type_id).order_by('-date').first().date
-        validated_data["dates"] = CertificateDate.objects.filter(type_id=type_id).order_by('-date')
+        street = Street.objects.optimized().filter(id=validated_data["street"]).first()
+        validated_data["last_date"] = CertificateDate.objects.optimized().filter(type_id=type_id).order_by('-date').first().date
+        validated_data["dates"] = CertificateDate.objects.optimized().filter(type_id=type_id).order_by('-date')
         model = LicencaBufett(DocumentData(validated_data["main_person"], validated_data, certificate, validated_data["secondary_person"]))
         text, _, _ = StringHelper.renderText(model)
-        Certificate.objects.filter(pk=instance.id).update(text=text, status="P")
-        CertificateData.objects.filter(pk=instance.id).update(house=validated_data["main_person"].address)
+        Certificate.objects.optimized().filter(pk=instance.id).update(text=text, status="P")
+        CertificateData.objects.optimized().filter(pk=instance.id).update(house=validated_data["main_person"].address)
         validated_data["street"] = street.id if street else None
-        certificate = Certificate.objects.get(pk=certificate.id)
+        certificate = Certificate.objects.optimized().get(pk=certificate.id)
         return {**validated_data, "id": certificate.id, "file": certificate.file}
 
     @atomic()
@@ -1091,15 +1115,15 @@ class CertificateModelLicencaBuffetCreateSerializer(ModelSerializer):
         del new_validate_data["street"]
         del new_validate_data["metros"]
         certificate = super().create(new_validate_data)
-        street = Street.objects.filter(id=validate_data["street"]).first()
-        validate_data["last_date"] = CertificateDate.objects.filter(type_id=type_id).order_by('-date').first().date
-        validate_data["dates"] = CertificateDate.objects.filter(type_id=type_id).order_by('-date')
+        street = Street.objects.optimized().filter(id=validate_data["street"]).first()
+        validate_data["last_date"] = CertificateDate.objects.optimized().filter(type_id=type_id).order_by('-date').first().date
+        validate_data["dates"] = CertificateDate.objects.optimized().filter(type_id=type_id).order_by('-date')
         model = LicencaBufett(DocumentData(validate_data["main_person"], validate_data, certificate, validate_data["secondary_person"]))
         text, _, _ = StringHelper.renderText(model)
-        Certificate.objects.filter(pk=certificate.id).update(text=text, status="P")
+        Certificate.objects.optimized().filter(pk=certificate.id).update(text=text, status="P")
         CertificateData.objects.create(certificate_id=certificate.id, house=validate_data["main_person"].address)
+        certificate = Certificate.objects.optimized().get(pk=certificate.id)
         validate_data["street"] = street.id if street else None
-        certificate = Certificate.objects.get(pk=certificate.id)
         return {**validate_data, "id": certificate.id, "file": certificate.file}
 
 class CertificateModelLicencaBuffetSerializer(ModelSerializer):
@@ -1186,7 +1210,7 @@ class CertificateSinglePersonSerializer(ModelSerializer):
         model = CertificateSinglePerson
         fields = ["id", "name", "gender", "type"]
     def create(self, validate_data):
-        CertificateSinglePerson.objects.filter(type_id=self.context['type_id']).delete()
+        CertificateSinglePerson.objects.optimized().filter(type_id=self.context['type_id']).delete()
         validate_data["type_id"] = int(self.context['type_id'])
         return super().create(validate_data)
 

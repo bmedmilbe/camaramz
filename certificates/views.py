@@ -69,13 +69,13 @@ class CountrysViewSet(ModelViewSet):
 
 
 class CovalsViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, GenericViewSet):
-    queryset = Coval.objects.select_related("cemiterio").all().order_by("number")
+    queryset = Coval.objects.optimized().all().order_by("number")
     serializer_class = CovalSerializer
     pagination_class = Pagination300
 
 
 class CemiteriosViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, GenericViewSet):
-    queryset = Cemiterio.objects.select_related("county").all().order_by("name")
+    queryset = Cemiterio.objects.optimized().all().order_by("name")
     serializer_class = CemiterioSerializer
     pagination_class = Pagination300
 
@@ -122,7 +122,7 @@ class StreetsViewSet(ModelViewSet):
         return StreetSerializer
 
     def get_queryset(self):
-        return Street.objects.select_related("town", "county").all().order_by("name")
+        return Street.objects.optimized().all().order_by("name")
 
 
 class IfenViewSet(ModelViewSet):
@@ -145,13 +145,13 @@ class MetadataViewSet(viewsets.ViewSet):
             "universities": University.objects.all().order_by('name'),
             "ifens": Ifen.objects.all().order_by('name'),
             "buildings": BiuldingType.objects.all().order_by('name'),
-            "cemiterios": Cemiterio.objects.select_related('county').all().order_by('name'),
-            "streets": Street.objects.select_related('town', 'county').all().order_by('name'),
+            "cemiterios": Cemiterio.objects.optimized().all().order_by('name'),
+            "streets": Street.objects.optimized().all().order_by('name'),
             "changes": Change.objects.all().order_by('name'),
-            "towns": Town.objects.select_related('county').all().order_by('name'),
-            "countys": County.objects.select_related('country').all().order_by('name'),
-            "certificateTitles": CertificateTitle.objects.select_related('certificate_type').all().order_by('name'),
-            "covals": Coval.objects.select_related("cemiterio").all().order_by('number'),
+            "towns": Town.objects.optimized().all().order_by('name'),
+            "countys": County.objects.optimized().all().order_by('name'),
+            "certificateTitles": CertificateTitle.objects.optimized().all().order_by('name'),
+            "covals": Coval.objects.optimized().all().order_by('number'),
             "idtypes": IDType.objects.all().order_by('name'),
             "intituitions": Instituition.objects.all().order_by('name'),
         }
@@ -176,7 +176,7 @@ class CustomerViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, GenericV
     permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
-        return Customer.objects.select_related("user").filter(user_id=self.request.user)
+        return Customer.objects.optimized().filter(user_id=self.request.user)
 
     def get_serializer_class(self):
         return CustomerSerializer
@@ -189,7 +189,7 @@ class CustomerViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, GenericV
 
 
 class CovalSetUpViewSet(ModelViewSet):
-    queryset = Coval.objects.select_related("cemiterio").all().order_by("square", "-number")
+    queryset = Coval.objects.optimized().all().order_by("square", "-number")
     permission_classes = [IsStaff]
     pagination_class = Pagination300
 
@@ -223,14 +223,14 @@ class CertificateViewSet(
 
 
 class CertificateCommentViewSet(mixins.UpdateModelMixin, GenericViewSet):
-    queryset = Certificate.objects.select_related("type", "main_person", "house", "secondary_person").order_by("-id").all()
+    queryset = Certificate.objects.optimized().order_by("-id").all()
 
     def get_serializer_class(self):
         return CertificateCommentSerializer
 
 
 class CertificateTitleViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, GenericViewSet):
-    queryset = CertificateTitle.objects.select_related("certificate_type").order_by("name").all()
+    queryset = CertificateTitle.objects.optimized().order_by("name").all()
     filter_backends = [DjangoFilterBackend]
     filterset_fields = {'certificate_type': ['exact', 'gt', 'lt']}
     pagination_class = Pagination300
@@ -239,85 +239,41 @@ class CertificateTitleViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, 
         return CertificateTitleSerializer
 
 
-class CertificateModelViewSet(ModelViewSet):
+class CertificateModelViewSet(
+    mixins.UpdateModelMixin, 
+    mixins.CreateModelMixin, 
+    GenericViewSet):
     def get_queryset(self):
-        return Certificate.objects.select_related(
-        "type__certificate_type", 
-        'main_person__id_type',
-        'main_person__id_issue_local',
-        'main_person__id_issue_country',
-        'main_person__nationality',
-        'main_person__birth_address',
-        'main_person__address',
-        'main_person__birth_address__birth_street__town__county__country',
-        'main_person__birth_address__birth_town__county__country',
-        'main_person__birth_address__birth_county__country',
-        'main_person__birth_address__birth_country',
-        'main_person__address__street__town__county__country',
-        'main_person__address__street__county__country',
-        "house__street__county__country", 
-        "secondary_person",
-        'secondary_person__id_type',
-        'secondary_person__id_issue_local',
-        'secondary_person__id_issue_country',
-        'secondary_person__nationality',
-        'secondary_person__birth_address',
-        'secondary_person__address',
-        'secondary_person__birth_address__birth_street__town__county__country',
-        'secondary_person__birth_address__birth_town__county__country',
-        'secondary_person__birth_address__birth_county__country',
-        'secondary_person__birth_address__birth_country',
-        'secondary_person__address__street__town__county__country',
-        'secondary_person__address__street__county__country').order_by("-id")
+
+        
+        return Certificate.objects.optimized().order_by("-id")
 
     def get_serializer_class(self):
         type_id = int(self.kwargs.get('title_pk'))
-        if self.request.method in ["POST", "PUT", "PATCH"]:
-            if type_id in [1, 5, 6, 7, 9, 10, 11, 15, 16, 17, 19, 20, 21, 22, 30, 34, 68, 35]:
-                return CertificateModelOneCreateSerializer
-            elif type_id in [2, 4, 8]:
-                return CertificateModelThreeCreateSerializer
-            elif type_id in [3, 13]:
-                return CertificateModelTwoCreateSerializer
-            elif type_id == 12:
-                return CertificateModelFifthCreateSerializer
-            elif type_id == 18:
-                return CertificateModelSeventhCreateSerializer
-            elif type_id in [23, 28]:
-                return CertificateModelAutoConstrucaoCreateSerializer
-            elif type_id in [29, 32]:
-                return CertificateModelLicencaBuffetCreateSerializer
-            elif type_id == 24:
-                return CertificateModelCertCompraCovalCreateSerializer
-            elif type_id == 25:
-                return CertificateModelAutoModCovalCreateSerializer
-            elif type_id == 27:
-                return CertificateModelLicBarracaCreateSerializer
-            elif type_id == 33:
-                return CertificateModelEnterroCreateSerializer
-
-        if type_id == 2:
-            return CertificateModelThreeSerializer
-        elif type_id in [3, 13]:
-            return CertificateModelTwoSerializer
-        elif type_id == 12:
-            return CertificateModelFifthSerializer
-        elif type_id == 18:
-            return CertificateModelSeventhSerializer
-        elif type_id in [23, 28]:
-            return CertificateModelAutoConstrucaoSerializer
-        elif type_id in [24, 30]:
-            return CertificateModelCertCompraCovalSerializer
-        elif type_id == 25:
-            return CertificateModelAutoModCovalSerializer
-        elif type_id == 27:
-            return CertificateModelLicBarracaSerializer
-        elif type_id in [29, 31]:
-            return CertificateModelLicencaBuffetSerializer
-        elif type_id == 32:
-            return CertificateModelEnterroSerializer
         
-        return CertificateModelOneSerializer
+        if type_id in [2, 4, 8]:
+            return CertificateModelThreeCreateSerializer
+        elif type_id in [3, 13]:
+            return CertificateModelTwoCreateSerializer
+        elif type_id == 12:
+            return CertificateModelFifthCreateSerializer
+        elif type_id == 18:
+            return CertificateModelSeventhCreateSerializer
+        elif type_id in [23, 28]:
+            return CertificateModelAutoConstrucaoCreateSerializer
+        elif type_id in [29, 32]:
+            return CertificateModelLicencaBuffetCreateSerializer
+        elif type_id == 24:
+            return CertificateModelCertCompraCovalCreateSerializer
+        elif type_id == 25:
+            return CertificateModelAutoModCovalCreateSerializer
+        elif type_id == 27:
+            return CertificateModelLicBarracaCreateSerializer
+        elif type_id == 33:
+                return CertificateModelEnterroCreateSerializer
+        # when type_id in [1, 5, 6, 7, 9, 10, 11, 15, 16, 17, 19, 20, 21, 22, 30, 34, 68, 35]:
+        return CertificateModelOneCreateSerializer
+        
 
     def get_serializer_context(self):
         return {"type_id": self.kwargs.get('title_pk')}
@@ -339,7 +295,7 @@ class CertificatePersonsViewSet(ModelViewSet):
         return {"type_id": self.kwargs.get('title_pk')}
 
 
-class CertificateSimpleParentsViewSet(ModelViewSet):
+class CertificateSimpleParentsViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, GenericViewSet):
     def get_queryset(self):
         type_id = int(self.kwargs.get('title_pk'))
         return CertificateSimpleParent.objects.filter(type_id=type_id)
@@ -363,8 +319,8 @@ class CertificateSinglePersonsViewSet(ModelViewSet):
     def get_queryset(self):
         type_id = int(self.kwargs.get('title_pk'))
         if type_id == 12:
-            return CertificateSinglePerson.objects.select_related("type").filter(type_id=type_id).all()
-        return CertificateSinglePerson.objects.select_related("type").filter(type_id=-1)
+            return CertificateSinglePerson.objects.optimized().filter(type_id=type_id).all()
+        return CertificateSinglePerson.objects.optimized().filter(type_id=-1)
 
     def get_serializer_class(self):
         return CertificateSinglePersonSerializer
@@ -373,10 +329,10 @@ class CertificateSinglePersonsViewSet(ModelViewSet):
         return {"type_id": self.kwargs.get('title_pk')}
 
 
-class CertificateDatesViewSet(ModelViewSet):
+class CertificateDatesViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, GenericViewSet):
     def get_queryset(self):
         type_id = int(self.kwargs.get('title_pk'))
-        return CertificateDate.objects.select_related("type").filter(type_id=type_id).all()
+        return CertificateDate.objects.optimized().filter(type_id=type_id).all()
 
     def get_serializer_class(self):
         return CertificateDateSerializer
@@ -389,10 +345,7 @@ class CertificateDatesViewSet(ModelViewSet):
 
 
 class PersonBirthAddressViewSet(ModelViewSet):
-    queryset = PersonBirthAddress.objects.select_related("birth_county", 
-                                                         "birth_town", 
-                                                         "birth_country",
-                                                         "birth_address").all()
+    queryset = PersonBirthAddress.objects.optimized().all()
 
     def get_serializer_class(self):
         if self.request.method == "POST":
@@ -401,7 +354,7 @@ class PersonBirthAddressViewSet(ModelViewSet):
 
 
 class CountysViewSet(ModelViewSet):
-    queryset = County.objects.select_related("country").all().order_by("name")
+    queryset = County.objects.optimized().all().order_by("name")
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = Pagination300
 
@@ -412,7 +365,7 @@ class CountysViewSet(ModelViewSet):
 
 
 class TownViewSet(ModelViewSet):
-    queryset = Town.objects.select_related("county").all().order_by("name")
+    queryset = Town.objects.optimized().all().order_by("name")
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = Pagination300
 
@@ -423,7 +376,7 @@ class TownViewSet(ModelViewSet):
 
 
 class HouseViewSet(ModelViewSet):
-    queryset = House.objects.select_related("street").all().order_by("street__name", "house_number")
+    queryset = House.objects.optimized().all().order_by("street__name", "house_number")
 
     def get_serializer_class(self):
         if self.request.method == "POST":

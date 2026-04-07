@@ -14,7 +14,7 @@ class LicencaBaile(Document):
         data = self.data
     
 
-        simple_days = CertificateDate.objects.filter(type_id=data.type2.id)
+        simple_days = CertificateDate.objects.optimized().filter(type_id=data.type2.id)
         simple_days_text = StringHelper.ext_days(StringHelper,simple_days.order_by("date__year", "date__month", "date__day"))
         self.text = f"Por esta Câmara se faz Constar as autoridades e mais pessoas a quem o conhecimento desta competir que foi concedida a Licença {StringHelper.oa4(StringHelper,data.bi1.gender)} senhor{StringHelper.oa2(StringHelper,data.bi1.gender)}{StringHelper.text_bi(StringHelper, data.type2,data.bi1,data.bi2,data.data)} residente em {StringHelper.house_address(StringHelper, data.bi1.address)} para que nos termos da Legislação Vigente, passa a explorar {simple_days_text}{StringHelper.street_address(StringHelper, data.data['street'])}, {data.data['infra']}."
     
