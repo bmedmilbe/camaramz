@@ -38,14 +38,14 @@ INSTALLED_APPS = [
 
 # --- MIDDLEWARE ---
 MIDDLEWARE = [
-      "debug_toolbar.middleware.DebugToolbarMiddleware",
-    "corsheaders.middleware.CorsMiddleware",  
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "core.middleware.TenantMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware", # Handles local static files
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # Handles local static files
     "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",  
+    "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -98,20 +98,20 @@ USE_TZ = True
 
 # --- STATIC & MEDIA FILES ---
 STATIC_URL = "/static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"  
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 MEDIA_URL = "/media/"
 
-MEDIA_ROOT = BASE_DIR / "media" 
+MEDIA_ROOT = BASE_DIR / "media"
 
 # --- HYBRID STORAGE CONFIGURATION ---
-# This setup separates static and media 
+# This setup separates static and media
 STORAGES = {
     "default": {
-        "BACKEND": "storages.backends.s3.S3Storage", # User uploads -> S3
+        "BACKEND": "storages.backends.s3.S3Storage",  # User uploads -> S3
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage", # CSS/JS -> Local 
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",  # CSS/JS -> Local
     },
 }
 
@@ -127,11 +127,11 @@ CORS_ALLOW_HEADERS = [
     "user-agent",
     "x-csrftoken",
     "x-requested-with",
-    "credentials",    
+    "credentials",
     "x-tenant-id"
-    ]
+]
 
-CSRF_COOKIE_HTTPONLY = False  
+CSRF_COOKIE_HTTPONLY = False
 SESSION_COOKIE_SECURE = False
 
 # --- REST FRAMEWORK ---
@@ -140,17 +140,18 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.JSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
     ],
-    'DEFAULT_METADATA_CLASS': None, 
+    'DEFAULT_METADATA_CLASS': None,
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.AllowAny",
-    ],   
+    ],
     "COERCE_DECIMAL_TO_STRING": False,
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'PAGE_SIZE': 10,
-    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
+
 }
 
 # --- DJOSER & JWT ---
@@ -160,7 +161,7 @@ DJOSER = {
     "PASSWORD_RESET_CONFIRM_URL": "auth/reset-password/{uid}/{token}",
     "PASSWORD_RESET_CONFIRM_RETYPE": True,
     "PASSWORD_RESET_SHOW_EMAIL_NOT_FOUND": True,
-    'LOGIN_FIELD': 'email',  
+    'LOGIN_FIELD': 'email',
     'USER_ID_FIELD': 'id',
     "SERIALIZERS": {
         "user_create": "core.serializers.UserCreateSerializer",
@@ -173,8 +174,8 @@ DJOSER = {
         "password_reset_confirm_retype": "core.serializers.PasswordResetConfirmRetypeSerializer",
     },
 
-    
-   
+
+
 }
 
 SIMPLE_JWT = {
