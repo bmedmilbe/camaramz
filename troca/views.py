@@ -6,7 +6,6 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.permissions import BasePermission
 from rest_framework import status
-from rest_framework.pagination import PageNumberPagination
 
 from pprint import pprint
 from django.db.models import Q, Sum
@@ -17,8 +16,6 @@ from .serializers import (
     TransactionDeleteSerializer,
     TransactionSerializer,
     TransactionCompleteSerializer,
-    TransactionUncompleteSerializer,
-    TransactionChargeSerializer
 
 )
 from rest_framework.decorators import action
@@ -96,36 +93,6 @@ class TransactionViewSet(ModelViewSet):
         transaction = serializer.delete(transaction)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=True, methods=['patch'], permission_classes=[IsAuthenticated])
-    def uncomplete(self, request, pk=None):
-        customer = get_customer(self.request.user)
-        context = {'customer_id': customer.id}
-
-        transaction = self.get_object()
-        serializer = TransactionUncompleteSerializer(data=request.data, context=context)
-        transaction = serializer.update(transaction, request.data)
-        return Response(TransactionSerializer(transaction).data)
-
-    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
-    def total_i_charged(self, request, pk=None):
-        customer = get_customer(self.request.user)
-        deliver_id = request.query_params.get("deliver")
-        charges = Transaction.objects.optimized().filter(Q(deliver_id=deliver_id), Q(boss=customer),
-                                                         is_charge=True).aggregate(total=Sum("value"))
-        # pprint(charges)
-        # serializer = ChargeSerializer(charges, many=True)
-        return Response(charges)
-
-    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
-    def total_i_got(self, request, pk=None):
-        customer = get_customer(self.request.user)
-        boss_id = request.query_params.get("boss")
-        charges = Transaction.objects.optimized().filter(Q(completed_by=customer), Q(boss_id=boss_id),
-                                                         is_charge=True).aggregate(total=Sum("value"))
-        # pprint(charges)
-        # serializer = ChargeSerializer(charges, many=True)
-        return Response(charges)
-
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def balance(self, request, pk=None):
         boss_id = request.query_params.get("boss")
@@ -143,13 +110,3 @@ class TransactionViewSet(ModelViewSet):
             out=Sum("value"))
 
         return Response(enter | out)
-
-    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
-    def total_i_delivered(self, request, pk=None):
-        customer = get_customer(self.request.user)
-        boss_id = request.query_params.get("boss")
-        total = Transaction.objects.optimized().filter(Q(completed_by=customer), Q(boss_id=boss_id),
-                                                       is_charge=False, completed=True).aggregate(total=Sum("value"))
-        # pprint(charges)
-        # serializer = ChargeSerializer(charges, many=True)
-        return Response(total)

@@ -149,16 +149,3 @@ class TransactionCompleteSerializer(ModelSerializer):
         validated_data['completed_date'] = datetime.now()
         # pprint(validated_data)
         return super().update(instance, validated_data)
-
-
-class TransactionUncompleteSerializer(ModelSerializer):
-    class Meta:
-        model = Transaction
-        fields = [
-            "id"
-        ]
-
-    def update(self, instance, validated_data):
-        validated_data = dict()
-        validated_data['completed'] = False
-        return super().update(instance, validated_data)
