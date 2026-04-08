@@ -1,7 +1,6 @@
-from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
-from rest_framework.mixins import ListModelMixin, CreateModelMixin, DestroyModelMixin, UpdateModelMixin, RetrieveModelMixin
+from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
 from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
@@ -10,27 +9,22 @@ from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
 
 from pprint import pprint
-from django.db.models import Q, Count, Sum
+from django.db.models import Q, Sum
 from .helpers import get_boss, get_customer
-from .serializers import (ChargeCreateSerializer, ChargeSerializer,
-                          CustomerSerializer,
-                          FriendSerializer, FriendTransactionsSerializer, PaymentForFriendCreateSerializer, PaymentForFriendSerializer,
-                          TransactionCreateSerializer, TransactionDeleteSerializer,
-                          TransactionSerializer,
-                          TransactionSetFriendSerializer,
-                          TransactionCompleteSerializer,
-                          TransactionUncompleteSerializer,
-                          TransactionChargeSerializer
+from .serializers import (
+    CustomerSerializer,
+    TransactionCreateSerializer,
+    TransactionDeleteSerializer,
+    TransactionSerializer,
+    TransactionCompleteSerializer,
+    TransactionUncompleteSerializer,
+    TransactionChargeSerializer
 
-                          )
+)
 from rest_framework.decorators import action
+from .models import Customer, Transaction
+
 # Create your views here.
-
-from .models import Charge, Customer, Friend, FriendPayment, Transaction
-
-
-class PaginationHundread(PageNumberPagination):
-    page_size = 100
 
 
 class IsBoss(BasePermission):
@@ -40,44 +34,6 @@ class IsBoss(BasePermission):
         if user.is_authenticated:
             return get_boss(user)
         return False
-
-
-class FriendViewSet(ModelViewSet):
-    serializer_class = FriendTransactionsSerializer
-    queryset = Friend.objects.optimized().all()
-    permission_classes = [IsBoss]
-
-    pagination_class = PaginationHundread
-
-    @action(detail=False, methods=['get'], permission_classes=[IsBoss])
-    def balance(self, request, pk=None):
-        boss_id = request.query_params.get("boss")
-        friend_id = request.query_params.get("friend")
-        enter = FriendPayment.objects.optimized().filter(Q(friend_id=friend_id), Q(boss_id=boss_id)).aggregate(enter=Sum("value"))
-        out = Transaction.objects.optimized().filter(Q(friend_id=friend_id), Q(boss_id=boss_id)).aggregate(out=Sum("value"))
-
-        return Response(enter | out)
-
-
-class FriendPaymentViewSet(ModelViewSet):
-    # serializer_class = PaymentForFriendSerializer
-
-    def get_serializer_class(self):
-        if self.request.method == "POST":
-            return PaymentForFriendCreateSerializer
-        return PaymentForFriendSerializer
-
-    def get_serializer_context(self):
-        customer = get_customer(self.request.user)
-        return {'boss_id': customer.id, "pk": self.kwargs.get('friend_pk')}
-
-    def get_queryset(self):
-
-        # return super().get_queryset()
-        pprint(self.kwargs)
-        return FriendPayment.objects.optimized().filter(friend_id=self.kwargs.get('friend_pk'))
-
-    permission_classes = [IsBoss]
 
 
 class CustomerViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
@@ -112,26 +68,11 @@ class TransactionViewSet(ModelViewSet):
     filter_backends = [SearchFilter,
                        DjangoFilterBackend, OrderingFilter]
 
-    filterset_fields = ['boss', 'is_charge', 'completed', 'completed_by', 'friend', 'friend_paid']
-    search_fields = ['description', 'value', 'friend__name']
+    filterset_fields = ['boss', 'is_charge', 'completed', 'completed_by']
+    search_fields = ['description', 'value']
 
     def get_serializer_context(self):
         return {'user': self.request.user}
-
-    @action(detail=True, methods=['patch'], permission_classes=[IsAuthenticated])
-    def set_friend(self, request, pk=None):
-        customer = get_customer(self.request.user)
-        context = {'boss': customer.boss}
-
-        transaction = self.get_object()
-
-        serializer = TransactionSetFriendSerializer(data=request.data, context=context)
-        if serializer.is_valid():
-            transaction = serializer.update(transaction, request.data)
-            return Response(TransactionSerializer(transaction).data)
-        else:
-            return Response(serializer.errors,
-                            status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['patch'], permission_classes=[IsAuthenticated])
     def set_charge(self, request, pk=None):
@@ -227,37 +168,3 @@ class TransactionViewSet(ModelViewSet):
         # pprint(charges)
         # serializer = ChargeSerializer(charges, many=True)
         return Response(total)
-
-
-class ChargeViewSet(ModelViewSet):
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-
-        return Charge.objects.optimized().filter(Q(boss__user=self.request.user))
-
-    def get_serializer_class(self):
-        if self.request.method in ['POST', 'PATCH', 'PUT']:
-            return ChargeCreateSerializer
-
-        return ChargeSerializer
-
-    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
-    def total_i_got(self, request, pk=None):
-        customer = get_customer(self.request.user)
-        charges = Charge.objects.optimized().aggregate(total=Sum("value"))
-
-        return Response(charges)
-
-    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
-    def total_i_gave(self, request, pk=None):
-        customer = get_customer(self.request.user)
-        charges = Charge.objects.optimized().filter(boss=customer).aggregate(total=Sum("value"))
-
-        return Response(charges)
-
-    def get_serializer_context(self):
-        customer = get_customer(self.request.user)
-        if customer:
-            return {'boss': customer.boss, 'boss_id': customer.id}
-        return {'boss': False}
