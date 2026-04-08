@@ -75,21 +75,6 @@ class TransactionViewSet(ModelViewSet):
         return {'user': self.request.user}
 
     @action(detail=True, methods=['patch'], permission_classes=[IsAuthenticated])
-    def set_charge(self, request, pk=None):
-        customer = get_customer(self.request.user)
-        context = {'boss': customer.boss}
-
-        transaction = self.get_object()
-
-        serializer = TransactionChargeSerializer(data=request.data, context=context)
-        if serializer.is_valid():
-            transaction = serializer.update(transaction, request.data)
-            return Response(TransactionSerializer(transaction).data)
-        else:
-            return Response(serializer.errors,
-                            status=status.HTTP_400_BAD_REQUEST)
-
-    @action(detail=True, methods=['patch'], permission_classes=[IsAuthenticated])
     def complete(self, request, pk=None):
         customer = get_customer(self.request.user)
         context = {'customer_id': customer.id}
