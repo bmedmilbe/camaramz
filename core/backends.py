@@ -6,6 +6,7 @@ from django.db.models import Q
 
 User = get_user_model()
 
+
 class TenantEmailOrPhoneBackend(ModelBackend):
     def authenticate(self, request, username=None, password=None, **kwargs):
         # 1. FIX: Djoser often passes 'email' as a keyword argument instead of 'username'.
@@ -32,7 +33,7 @@ class TenantEmailOrPhoneBackend(ModelBackend):
         # AND strictly belonging to the current request.tenant
         try:
             user = User.objects.get(
-                (Q(email=identifier) | Q(phone=identifier)) & 
+                (Q(email=identifier) | Q(phone=identifier)) &
                 Q(tenant=request.tenant)
             )
         except (User.DoesNotExist, User.MultipleObjectsReturned):
