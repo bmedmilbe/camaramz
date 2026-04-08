@@ -6,6 +6,7 @@ from datetime import datetime
 from troca.helpers import get_customer
 from .models import Customer, Transaction
 from rest_framework import serializers
+from django.db import transaction
 
 
 def get_extra_kwargs(fields):
@@ -107,34 +108,6 @@ class TransactionCreateSerializer(ModelSerializer):
         super().destroy(instance, request)
 
 
-class TransactionChargeSerializer(ModelSerializer):
-    deliver = serializers.IntegerField()
-
-    def validate_deliver(self, value):
-        if not value:
-            raise ValidationError('Deliver is required')
-
-        elif not Customer.objects.filter(pk=value).exists():
-            raise ValidationError('Deliver does not exist')
-
-    class Meta:
-        model = Transaction
-        fields = [
-            "id",
-            "deliver",
-        ]
-
-    def update(self, instance, validated_data):
-        if not self.context['boss']:
-            raise ValidationError('You are not boss!')
-
-        data = validated_data
-        validated_data = dict()
-        validated_data['completed_by_id'] = data['deliver']
-        validated_data['is_charge'] = True
-        return super().update(instance, validated_data)
-
-
 class TransactionCompleteSerializer(ModelSerializer):
     class Meta:
         model = Transaction
@@ -142,10 +115,15 @@ class TransactionCompleteSerializer(ModelSerializer):
             "id"
         ]
 
+    @transaction.atomic()
     def update(self, instance, validated_data):
         validated_data = dict()
+        current_transaction = Transaction.objects.select_for_update().get(id=instance.id)
+        if current_transaction.completed:
+            raise ValidationError('Transaction already completed!')
+
         validated_data['completed_by_id'] = self.context['customer_id']
         validated_data['completed'] = True
         validated_data['completed_date'] = datetime.now()
-        # pprint(validated_data)
+
         return super().update(instance, validated_data)
