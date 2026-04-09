@@ -79,7 +79,8 @@ class TransactionViewSet(ModelViewSet):
 
         try:
             with transaction.atomic():
-                transaction_obj = get_object_or_404(self.get_queryset().select_for_update(), pk=pk)
+                transaction_obj = get_object_or_404(
+                    self.get_queryset().select_for_update(of=('self',), nowait=True), pk=pk)
                 serializer = TransactionCompleteSerializer(transaction_obj,
                                                            data=request.data,
                                                            context=context,
@@ -93,11 +94,28 @@ class TransactionViewSet(ModelViewSet):
                 status=status.HTTP_409_CONFLICT
             )
 
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def previews(self, request):
+        max_id = int(request.query_params.get("max_id", 0))
+        boss_id = int(request.query_params.get("boss", 0))
+        completed_by_id = int(request.query_params.get("completed_by", 0))
+        limit = int(request.query_params.get("limit", 10))
+
+        if max_id <= 0:
+            transactions = Transaction.objects.optimized().filter(
+                Q(boss_id=boss_id), Q(completed_by_id=completed_by_id)).order_by('-id')[:limit]
+        else:
+            transactions = Transaction.objects.optimized().filter(
+                Q(boss_id=boss_id), Q(completed_by_id=completed_by_id), id__lt=max_id).order_by('-id')[:limit]
+
+        serializer = TransactionSerializer(transactions, many=True)
+        return Response(data={'results': serializer.data})
+
     @action(detail=True, methods=['delete'], permission_classes=[IsBoss])
     def delete(self, request, pk=None):
         with transaction.atomic():
             transaction_obj = get_object_or_404(
-                self.get_queryset().select_for_update(),
+                self.get_queryset().select_for_update(of=('self',), nowait=True),
                 pk=pk,
                 boss__user=self.request.user)
             serializer = TransactionDeleteSerializer(transaction_obj,
