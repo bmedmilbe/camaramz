@@ -5,6 +5,5 @@ class TrocaConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'troca'
 
-
     def ready(self) -> None:
-        import troca.signals.hendlers
+        import troca.signals.handlers

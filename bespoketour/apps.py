@@ -6,5 +6,4 @@ class BespoketourConfig(AppConfig):
     name = 'bespoketour'
 
     def ready(self) -> None:
-        import bespoketour.signals.hendlers
-
+        import bespoketour.signals.handlers

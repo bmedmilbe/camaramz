@@ -6,4 +6,4 @@ class CertificatesConfig(AppConfig):
     name = 'certificates'
 
     def ready(self) -> None:
-        import certificates.signals.hendlers
+        import certificates.signals.handlers
