@@ -33,6 +33,7 @@ django-mail-templated = "2.6.5"
 django = "==5.0"
 pillow = "*"
 django-debug-toolbar = "*"
+drf-spectacular = "*"
 
 [dev-packages]
 

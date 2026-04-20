@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     "storages",
     "mail_templated",
     "debug_toolbar",
+    "drf_spectacular",
 ]
 
 # --- MIDDLEWARE ---
@@ -151,9 +152,55 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'PAGE_SIZE': 10,
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
-
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Government Multi-Tenant Kernel API',
+    'DESCRIPTION': (
+        'Centralized Backend Engine for Municipal Management and NGO Services. '
+        'Includes Analytical & Automation Workflows for document issuance (CMZ) '
+        'and supply chain transparency (CECAB). Featuring strict Tenant isolation '
+        'and Financial Ledger integrity.'
+    ),
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'CONTACT': {
+        'name': 'Edmilbe Ramos',
+        'email': 'bm.edmilbe@gmail.com',
+    },
+    # Garante que a documentação use o esquema de autenticação correto (ex: JWT ou Token)
+    'COMPONENT_SPLIT_PATCH': True,
+    'COMPONENT_SPLIT_COMMAND': True,
 }
 
+# Spectacular Settings atualizado para JWT
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Government Multi-Tenant Kernel API',
+    'DESCRIPTION': (
+        'Centralized Backend Engine for Municipal Management and NGO Services. '
+        'Analytical & Automation Workflows with JWT Authentication and Tenant isolation.'
+    ),
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'CONTACT': {
+        'name': 'Edmilbe Ramos',
+        'email': 'bm.edmilbe@gmail.com',
+    },
+    'APPEND_COMPONENTS': {
+        "securitySchemes": {
+            "BearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+            }
+        }
+    },
+    'SECURITY': [
+        {
+            "BearerAuth": [],
+        }
+    ],
+}
 # --- DJOSER & JWT ---
 DJOSER = {
     "SET_PASSWORD_RETYPE": True,
