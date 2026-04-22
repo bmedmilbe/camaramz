@@ -27,7 +27,6 @@ INSTALLED_APPS = [
     "troca",
     "cms",
     "fly",
-    "ground",
     "setup",
     "core",
     "storages",
