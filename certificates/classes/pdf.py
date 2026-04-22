@@ -1,6 +1,13 @@
-# # class PDF():
-# #     pass
-import shutil
+"""PDF generation and management for certificates.
+
+This module handles the generation, rendering, and storage of PDF certificates
+using xhtml2pdf (pisa). Manages certificate text formatting, pricing calculations,
+and file storage to both local and S3 cloud storage.
+
+Classes:
+    PDF: Main class for certificate PDF generation and storage.
+"""
+
 from decimal import Decimal
 from io import BytesIO
 import os
@@ -10,44 +17,48 @@ from xhtml2pdf import pisa
 from django.core.files import File
 import uuid
 from django.conf import settings
-#  require_once("files/dompdf/autoload.inc.php");
-#  use Dompdf\Dompdf;
 from django.core.files.storage import default_storage
 from certificates.classes.string_helper import StringHelper
 from certificates.models import Certificate, CertificateDate, CertificateTitle, CertificateTypes, Ifen, Person
-
 from datetime import date, timedelta
-from io import BytesIO
 from django.core.files.base import ContentFile
-
-
-
 from pprint import pprint
 
 
-# class GeneratePDF(View):
-#     def get(self, request, *args, **kwargs):
-#         template = get_template('invoice.html')
-#         context = { "invoice_id": 123, "customer_name": "John Cooper", "amount": 1399.99, "today": "Today", }
-#         html = template.render(context)
-#         pdf = render_to_pdf('invoice.html', context)
-#         if pdf:
-#             response = HttpResponse(pdf, content_type='application/pdf')
-#             filename = "Invoice_%s.pdf" %("12341231")
-#             content = "inline; filename='%s'" %(filename)
-#             download = request.GET.get("download")
-#             if download:
-#                 content = "attachment; filename='%s'" %(filename)
-#                 response['Content-Disposition'] = content
-#                 return response
-
-#         return HttpResponse("Not found")
-
-# from storages.backends.s3boto3 import S3Boto3Storage
-
-
 class PDF():
+    """Generates and manages PDF certificates with pricing and formatting.
+
+    Handles the complete PDF generation workflow including text formatting,
+    price calculations, template rendering, and file storage to cloud (S3)
+    or local storage. Supports multiple certificate types with different
+    pricing and layout rules.
+
+    Attributes:
+        text (str): The main certificate body text content.
+        type1 (CertificateTypes): The certificate type classification.
+        type2 (CertificateTitle): The specific certificate title/variant.
+        certificate (Certificate): The certificate model instance being generated.
+        data (dict): Form data containing certificate-specific information.
+        bi (Person): The person (individual) the certificate is for.
+        presidente (str): Name of the district president/official.
+        distrito (str): The administrative district name.
+        date (str): Formatted issue date string.
+        footer (str): Footer text with formatted date.
+        final_text (str): Final formatted text for the certificate body.
+        conta_details (dict): Pricing breakdown (total, fees, taxes).
+    """
+
     def __init__(self, text, type1: CertificateTypes, type2: CertificateTitle, gerado: Certificate, form, bi: Person):
+        """Initialize PDF generator with certificate data.
+
+        Args:
+            text (str): Main certificate body text content.
+            type1 (CertificateTypes): Certificate type classification.
+            type2 (CertificateTitle): Specific certificate title/variant.
+            gerado (Certificate): Generated certificate model instance.
+            form (dict): Form data dictionary with certificate-specific fields.
+            bi (Person): Person (individual) the certificate is for.
+        """
         self.pdf_root = ""
         self.pdf_name = ""
         self.pdf_number = ""
@@ -79,15 +90,13 @@ class PDF():
         elif type2.id == 25:
             self.conta_details = self.conta(
                 type1, type2, gerado.number, self.data['change'].price)
-            
-        
+
         elif type2.id == 27:
 
             self.conta_details = self.conta(
                 type1, type2, gerado.number, self.data['range'].price)
-            
 
-        elif type2.id in [29,32]:
+        elif type2.id in [29, 32]:
             if not self.data['metros']:  # metros none
                 value = 250 * self.data['dates'].count()
             else:
@@ -109,40 +118,43 @@ class PDF():
             self.conta_details = self.conta(type1, type2, gerado.number, value)
 
     def render_pdf(self):
+        """Render certificate HTML template to PDF and save to storage.
+
+        Performs the following steps:
+        1. Fetches IFEN (formatting) settings from database
+        2. Formats date and text with appropriate dashes/padding
+        3. Renders Django template with certificate data
+        4. Converts HTML to PDF using xhtml2pdf (pisa)
+        5. Saves PDF file to S3 or local storage
+        6. Updates Certificate model with file path
+
+        Returns:
+            tuple: (pdf_url, success_bool) where pdf_url is the file URL or empty string
+                   and success_bool indicates if generation succeeded.
+
+        Raises:
+            Certificate.DoesNotExist: If certificate record is not found during save.
+        """
         ifen = Ifen.objects.get(name="data")
         dash = ifen.size * " -"
 
         self.date = f"- - - Câmara Distrital de {self.bi.address.street.town.county.name}, na Cidade da Trindade, aos {self.date}."
-        # self.date = f"- - - Câmara Distrital de {self.bi.address.street.town.county.name}, na Cidade da {self.bi.address.street.town.name}, aos {self.date}."
-
-        # size = Ifen.objects.filter(name='DATA').first().size
-
-        
 
         self.date = f"{self.date}{dash[len(self.date):]}"
 
         ifen = Ifen.objects.get(name="texto")
-        resto = len(self.text)%88
-        dash = int((resto + (88-resto))) *"-"
-        # dash = (int(int(int(len(self.text))%92)) - 6) * "_ "
-        # - - - 
+        resto = len(self.text) % 88
+        dash = int((resto + (88 - resto))) * "-"
         self.text = f"{self.text}"
 
-        # self.footer = StringHelper.data(StringHelper,gerado.date_issue)
-        # Col
-        # Câmara Distrital de {{distrito}}, na Cidade da {{town}}, aos
-    #   {{date}}
-
         template = get_template("certificates/certificate_off.html")
-        
+
         context = {}
         context_dict = {
             'body': self.text,
             'presidente': f"{self.presidente}",
-            # 'distrito':f"{self.distrito}",
             'distrito': f"{self.bi.address.street.town.county.name.upper()}",
             'town': f"{self.bi.address.street.town.name}",
-            # 'presidente':f"{self.presidente}, presidente da camarâ distrtrital de {self.distrito}",
             'certificate': self.certificate,
             'type1': self.type1,
             'type2': self.type2,
@@ -162,35 +174,49 @@ class PDF():
         if pisa_status.err:
             return '', False
 
-        # 2. Define your paths (S3 likes forward slashes)
-        # This path is relative to your MEDIA_ROOT or S3 Bucket root
+        # 2. Define paths (S3 compatible format with forward slashes)
         folder_name = f"certificates/{self.type2.id}-{self.type1.slug}-de-{self.type2.slug[10:]}"
         file_name = f"{self.certificate.number}.pdf"
         full_path = f"{folder_name}/{file_name}"
 
         # 3. Save to Storage (S3 or Local)
-        # default_storage.save() automatically handles directory creation
         pdf_content = ContentFile(pdf_buffer.getvalue())
-        
-        # Optional: Delete if it already exists to mimic your "shutil.rmtree" logic
+
         if default_storage.exists(full_path):
             default_storage.delete(full_path)
 
         # 4. Update the Model
-        # We pass the ContentFile directly to the model field
         certificate = Certificate.objects.get(id=self.certificate.id)
-        
-        # certificate.file.save() takes the relative path and the content
         certificate.file.save(full_path, pdf_content)
-        
+
         return certificate.file.url, True
 
     def conta(self, type1: CertificateTypes, type2: CertificateTitle, atestado_number, autoV=0, cplp=False):
+        """Calculate and break down certificate pricing (fees, taxes, etc).
 
-        # pprint("type1:")
-        # pprint(type1)
-        # pprint("type2:")
-        # pprint(type2)
+        Calculates the total cost for a certificate based on its type and
+        administrative location. Breaks down costs into:
+        - Rasa (administrative processing fee)
+        - Selo (stamp/seal fee)
+        - Imposto (tax at 10% of adjusted value)
+        - Emolumento (professional service fee)
+
+        Args:
+            type1 (CertificateTypes): Certificate type classification.
+            type2 (CertificateTitle): Specific certificate title/variant.
+            atestado_number (str): Certificate number for reference.
+            autoV (int, optional): Override value for automatic calculation. Defaults to 0.
+            cplp (bool, optional): Flag for CPLP (Portuguese-speaking) countries. Defaults to False.
+
+        Returns:
+            dict: Pricing breakdown with keys:
+                - 'total': Total cost in currency units
+                - 'rasa': Processing fee amount
+                - 'selo': Stamp fee amount
+                - 'emolumento': Professional service fee
+                - 'imposto': Tax amount (10%)
+                - 'total_extenso': Total cost written in words (Portuguese)
+        """
         value = type2.type_price
 
         Total = 0
@@ -224,7 +250,6 @@ class PDF():
         Zero = Emolumento + Rasa
         Rasa = 0 if Zero == 0 else Rasa
         Emolumento = 0 if Zero == 0 else Emolumento
-        # pprint(Emolumento)
         Emolumento = round(Emolumento, 2)
         Rasa = round(Rasa, 2)
         Selo = round(Selo, 2)
@@ -247,7 +272,7 @@ class PDF():
 
         newString = ""
 
-        for i in range(0, c+1):
+        for i in range(0, c + 1):
             newString = f"{newString}-"
 
         newString = f"{newString}{string}"
