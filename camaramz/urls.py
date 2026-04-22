@@ -29,7 +29,6 @@ urlpatterns = [
     path("certificates/", include("certificates.urls")),
     path("fly/", include("fly.urls")),
     path("troca/", include("troca.urls")),
-    path("ground/", include("ground.urls")),
     path("cms/", include("cms.urls")),
     path("setup/", include("setup.urls")),
     path("auth/", include("djoser.urls")),
