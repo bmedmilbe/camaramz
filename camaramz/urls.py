@@ -27,7 +27,6 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("cms/", include("cms.urls")),
     path("certificates/", include("certificates.urls")),
-    path("fly/", include("fly.urls")),
     path("troca/", include("troca.urls")),
     path("cms/", include("cms.urls")),
     path("setup/", include("setup.urls")),

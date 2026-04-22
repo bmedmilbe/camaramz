@@ -26,7 +26,6 @@ INSTALLED_APPS = [
     "certificates",
     "troca",
     "cms",
-    "fly",
     "setup",
     "core",
     "storages",
