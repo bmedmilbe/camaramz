@@ -28,7 +28,6 @@ INSTALLED_APPS = [
     "cms",
     "fly",
     "ground",
-    "bespoketour",
     "setup",
     "core",
     "storages",
