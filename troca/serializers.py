@@ -1,8 +1,7 @@
 
 from rest_framework.validators import ValidationError
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
-from datetime import datetime
-
+from django.utils import timezone
 from troca.helpers import get_customer
 from .models import Customer, Transaction
 from rest_framework import serializers
@@ -120,6 +119,6 @@ class TransactionCompleteSerializer(ModelSerializer):
     def update(self, instance, validated_data):
         validated_data['completed_by_id'] = self.context['customer_id']
         validated_data['completed'] = True
-        validated_data['completed_date'] = datetime.now()
+        validated_data['completed_date'] = timezone.now()
 
         return super().update(instance, validated_data)
