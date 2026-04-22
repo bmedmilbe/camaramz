@@ -4,12 +4,12 @@ from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
 from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
-from rest_framework.permissions import BasePermission
 from rest_framework import status
 from django.db import transaction, DatabaseError
 from django.shortcuts import get_object_or_404
 from pprint import pprint
 from django.db.models import Q, Sum
+from .permissions import IsBoss
 from .helpers import get_boss, get_customer
 from .serializers import (
     CustomerSerializer,
@@ -23,15 +23,6 @@ from rest_framework.decorators import action
 from .models import Customer, Transaction
 
 # Create your views here.
-
-
-class IsBoss(BasePermission):
-
-    def has_permission(self, request, view):
-        user = request.user
-        if user.is_authenticated:
-            return get_boss(user)
-        return False
 
 
 class CustomerViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
