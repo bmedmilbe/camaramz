@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.db import models
-
+from django.core.validators import MinValueValidator
 # Create your models here.
 
 
@@ -28,7 +28,7 @@ class TransactionQuerySet(models.QuerySet):
 class Transaction(models.Model):
     objects = TransactionQuerySet.as_manager()
     description = models.CharField(max_length=255)
-    value = models.IntegerField()
+    value = models.IntegerField(validators=[MinValueValidator(1)])
     date = models.DateTimeField(auto_now_add=True)
 
     boss = models.ForeignKey(Customer, related_name="boss_transactions", on_delete=models.PROTECT)
