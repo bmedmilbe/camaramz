@@ -1173,7 +1173,7 @@ class CertificateModelLicBarracaCreateSerializer(BaseCertificateSerializer):
         validated_data["street"] = street_id
         if hasattr(validated_data.get("range"), "type"):
             validated_data["range"] = range_val
-
+        certificate = Certificate.objects.optimized().get(id=certificate.id)
         return {**validated_data, "id": certificate.id, "file": certificate.file}
 
     @atomic()
@@ -1196,6 +1196,7 @@ class CertificateModelLicBarracaCreateSerializer(BaseCertificateSerializer):
         if hasattr(validated_data.get("range"), "type"):
             validated_data["range"] = range_val
 
+        certificate = Certificate.objects.optimized().get(id=certificate.id)
         return {**validated_data, "id": certificate.id, "file": certificate.file}
 
 
@@ -1254,7 +1255,7 @@ class CertificateModelAutoConstrucaoCreateSerializer(BaseCertificateSerializer):
         # Re-set IDs for the final JSON response
         validated_data["building_type"] = building_id
         validated_data["street"] = street_id
-
+        certificate = Certificate.objects.optimized().get(id=certificate.id)
         return {**validated_data, "id": certificate.id, "file": certificate.file}
 
     @atomic()
@@ -1287,7 +1288,7 @@ class CertificateModelAutoConstrucaoCreateSerializer(BaseCertificateSerializer):
         # Restore IDs for the response
         validated_data["building_type"] = building_id
         validated_data["street"] = street_id
-
+        certificate = Certificate.objects.optimized().get(id=certificate.id)
         return {**validated_data, "id": certificate.id, "file": certificate.file}
 
 
@@ -1342,6 +1343,7 @@ class CertificateModelSeventhCreateSerializer(BaseCertificateSerializer):
 
         # 5. Restore the integer ID for the final response
         validated_data["country"] = country_id
+        certificate = Certificate.objects.optimized().get(id=certificate.id)
 
         return {**validated_data, "id": certificate.id, "file": certificate.file}
 
@@ -1364,7 +1366,7 @@ class CertificateModelSeventhCreateSerializer(BaseCertificateSerializer):
 
         # Restore ID for response
         validated_data["country"] = country_id
-
+        certificate = Certificate.objects.optimized().get(id=certificate.id)
         return {**validated_data, "id": certificate.id, "file": certificate.file}
 
 
@@ -1425,6 +1427,7 @@ class CertificateModelLicencaBuffetCreateSerializer(BaseCertificateSerializer):
 
         # Return IDs in the response
         validated_data["street"] = street_id
+        certificate = Certificate.objects.optimized().get(id=certificate.id)
 
         return {**validated_data, "id": certificate.id, "file": certificate.file}
 
@@ -1453,7 +1456,7 @@ class CertificateModelLicencaBuffetCreateSerializer(BaseCertificateSerializer):
 
         # Return IDs in the response
         validated_data["street"] = street_id
-
+        certificate = Certificate.objects.optimized().get(id=certificate.id)
         return {**validated_data, "id": certificate.id, "file": certificate.file}
 
 

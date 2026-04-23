@@ -279,7 +279,7 @@ class CertificateModelViewSet(
         elif type_id == 27:
             return CertificateModelLicBarracaCreateSerializer
         elif type_id == 33:
-            return CertificateModelEnterroCreateSerializer  # To Test
+            return CertificateModelEnterroCreateSerializer
         # when type_id in [1, 5, 6, 7, 9, 10, 11, 15, 16, 17, 19, 20, 21, 22, 30, 34, 68, 35]:
         return CertificateModelOneCreateSerializer
 
