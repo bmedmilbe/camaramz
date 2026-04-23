@@ -5,41 +5,41 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.views import Response
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticated
 
 from certificates.permission import IsStaff
 from certificates.serializers import (
-    BiuldingTypeSerializer, CemiterioSerializer, CertificateCommentSerializer, 
-    CertificateDateSerializer, CertificateModelAutoConstrucaoCreateSerializer, 
-    CertificateModelAutoConstrucaoSerializer, CertificateModelAutoModCovalCreateSerializer, 
-    CertificateModelAutoModCovalSerializer, CertificateModelCertCompraCovalCreateSerializer, 
-    CertificateModelCertCompraCovalSerializer, CertificateModelEnterroCreateSerializer, 
-    CertificateModelEnterroSerializer, CertificateModelFifthCreateSerializer, 
-    CertificateModelFifthSerializer, CertificateModelLicBarracaCreateSerializer, 
-    CertificateModelLicBarracaSerializer, CertificateModelLicencaBuffetCreateSerializer, 
-    CertificateModelLicencaBuffetSerializer, CertificateModelOneCreateSerializer, 
-    CertificateModelOneSerializer, CertificateModelSeventhCreateSerializer, 
-    CertificateModelSeventhSerializer, CertificateModelThreeCreateSerializer, 
-    CertificateModelThreeSerializer, CertificateModelTwoCreateSerializer, 
-    CertificateModelTwoSerializer, CertificateSerializer, 
-    CertificateSimpleParentSerializer, CertificateSimplePersonReadOnlySerializer, 
-    CertificateSimplePersonSerializer, CertificateSinglePersonSerializer, 
-    CertificateTitleSerializer, CertificateUpdateSerializer, ChangeSerializer, 
-    CountryCreateSerializer, CountrySerializer, CountyCreateSerializer, 
-    CountySerializer, CovalSerializer, CovalSetUpSerializer, CustomerSerializer, 
-    HouseCreateSerializer, HouseSerializer, IDTypeSerializer, IfenSerializer, 
-    IfenUpdateSerializer, InstituitionCreateSerializer, InstituitionSerializer, 
-    MetadataSerializer, ParentSerializer, PersonBirthAddressCreateSerializer, 
-    PersonBirthAddressSerializer, PersonCreateOrUpdateSerializer, PersonSerializer, 
-    StreetCreateSerializer, StreetSerializer, TownCreateSerializer, 
+    BiuldingTypeSerializer, CemiterioSerializer, CertificateCommentSerializer,
+    CertificateDateSerializer, CertificateModelAutoConstrucaoCreateSerializer,
+    CertificateModelAutoModCovalCreateSerializer,
+    CertificateModelCertCompraCovalCreateSerializer,
+    CertificateModelEnterroCreateSerializer,
+    CertificateModelFifthCreateSerializer,
+    CertificateModelLicBarracaCreateSerializer,
+    CertificateModelLicencaBuffetCreateSerializer,
+    CertificateModelOneCreateSerializer,
+    CertificateModelSeventhCreateSerializer,
+    CertificateModelThreeCreateSerializer,
+    CertificateModelTwoCreateSerializer,
+    CertificateSerializer,
+    CertificateSimpleParentSerializer, CertificateSimplePersonReadOnlySerializer,
+    CertificateSimplePersonSerializer, CertificateSinglePersonSerializer,
+    CertificateTitleSerializer, CertificateUpdateSerializer, ChangeSerializer,
+    CountryCreateSerializer, CountrySerializer, CountyCreateSerializer,
+    CountySerializer, CovalSerializer, CovalSetUpSerializer, CustomerSerializer,
+    HouseCreateSerializer, HouseSerializer, IDTypeSerializer, IfenSerializer,
+    IfenUpdateSerializer, InstituitionCreateSerializer, InstituitionSerializer,
+    MetadataSerializer, ParentSerializer, PersonBirthAddressCreateSerializer,
+    PersonBirthAddressSerializer, PersonCreateOrUpdateSerializer, PersonSerializer,
+    StreetCreateSerializer, StreetSerializer, TownCreateSerializer,
     TownSerializer, UniversityCreateSerializer, UniversitySerializer
 )
 
 from .models import (
-    BiuldingType, Cemiterio, CertificateDate, CertificateSimpleParent, 
-    CertificateSimplePerson, CertificateSinglePerson, CertificateTitle, 
-    Change, Country, County, Coval, Customer, House, IDType, Ifen, 
-    Instituition, Certificate, Parent, Person, PersonBirthAddress, 
+    BiuldingType, Cemiterio, CertificateDate, CertificateSimpleParent,
+    CertificateSimplePerson, CertificateSinglePerson, CertificateTitle,
+    Change, Country, County, Coval, Customer, House, IDType, Ifen,
+    Instituition, Certificate, Parent, Person, PersonBirthAddress,
     Street, Town, University
 )
 from .helpers import get_customer
@@ -60,7 +60,7 @@ class StandardResultsSetPagination(PageNumberPagination):
 class CountrysViewSet(ModelViewSet):
     queryset = Country.objects.all().order_by("name")
     pagination_class = Pagination300
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAuthenticated]
 
     def get_serializer_class(self):
         if self.request.method in ["POST", "PUT", "PATCH"]:
@@ -89,7 +89,7 @@ class ChangesViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, GenericVi
 class UniversitysViewSet(ModelViewSet):
     queryset = University.objects.all().order_by("name")
     pagination_class = Pagination300
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsStaff]
 
     def get_queryset(self):
         return University.objects.all().order_by("name")
@@ -114,7 +114,7 @@ class BiuldingTypeViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, Gene
 
 class StreetsViewSet(ModelViewSet):
     pagination_class = Pagination300
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsStaff]
 
     def get_serializer_class(self):
         if self.request.method in ["POST", "PUT", "PATCH"]:
@@ -126,7 +126,7 @@ class StreetsViewSet(ModelViewSet):
 
 
 class IfenViewSet(ModelViewSet):
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsStaff]
 
     def get_serializer_class(self):
         if self.request.method in ["PUT", "PATCH"]:
@@ -139,6 +139,8 @@ class IfenViewSet(ModelViewSet):
 
 class MetadataViewSet(viewsets.ViewSet):
     """Unified metadata endpoint to prevent waterfall lag."""
+    permission_classes = [IsStaff]
+
     def list(self, request):
         data = {
             "countries": Country.objects.all().order_by('name'),
@@ -161,7 +163,7 @@ class MetadataViewSet(viewsets.ViewSet):
 
 class InstituitionsViewSet(ModelViewSet):
     pagination_class = Pagination300
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsStaff]
 
     def get_serializer_class(self):
         if self.request.method in ["POST", "PUT", "PATCH"]:
@@ -173,7 +175,7 @@ class InstituitionsViewSet(ModelViewSet):
 
 
 class CustomerViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, GenericViewSet):
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsStaff]
 
     def get_queryset(self):
         return Customer.objects.optimized().filter(user_id=self.request.user)
@@ -200,19 +202,23 @@ class CovalSetUpViewSet(ModelViewSet):
 
 
 class CertificateViewSet(
-    mixins.ListModelMixin, 
-    mixins.RetrieveModelMixin, 
-    mixins.UpdateModelMixin, 
-    mixins.DestroyModelMixin, 
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
     GenericViewSet
-    ):
+):
     queryset = Certificate.objects.optimized().order_by("-id")
-    
-    
+
     pagination_class = PageNumberPagination
     permission_classes = [IsStaff]
     filter_backends = [filters.SearchFilter, DjangoFilterBackend, filters.OrderingFilter]
-    search_fields = ['main_person__name', 'main_person__surname', 'number__startswith', "main_person__id_number", "main_person__birth_date"]
+    search_fields = [
+        'main_person__name',
+        'main_person__surname',
+        'number__startswith',
+        "main_person__id_number",
+        "main_person__birth_date"]
     filterset_fields = {'status': ['exact'], 'type__certificate_type': ['exact', 'gt', 'lte']}
     ordering_fields = ['number', "main_person__name", "main_person__id_number", "main_person__birth_date", "date_issue"]
 
@@ -234,23 +240,26 @@ class CertificateTitleViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, 
     filter_backends = [DjangoFilterBackend]
     filterset_fields = {'certificate_type': ['exact', 'gt', 'lt']}
     pagination_class = Pagination300
+    permission_classes = [IsStaff]
 
     def get_serializer_class(self):
         return CertificateTitleSerializer
 
 
 class CertificateModelViewSet(
-    mixins.UpdateModelMixin, 
-    mixins.CreateModelMixin, 
-    GenericViewSet):
+        mixins.UpdateModelMixin,
+        mixins.CreateModelMixin,
+        GenericViewSet):
+
+    permission_classes = [IsStaff]
+
     def get_queryset(self):
 
-        
         return Certificate.objects.optimized().order_by("-id")
 
     def get_serializer_class(self):
         type_id = int(self.kwargs.get('title_pk'))
-        
+
         if type_id in [2, 4, 8]:
             return CertificateModelThreeCreateSerializer
         elif type_id in [3, 13]:
@@ -270,10 +279,9 @@ class CertificateModelViewSet(
         elif type_id == 27:
             return CertificateModelLicBarracaCreateSerializer
         elif type_id == 33:
-                return CertificateModelEnterroCreateSerializer
+            return CertificateModelEnterroCreateSerializer  # To Test
         # when type_id in [1, 5, 6, 7, 9, 10, 11, 15, 16, 17, 19, 20, 21, 22, 30, 34, 68, 35]:
         return CertificateModelOneCreateSerializer
-        
 
     def get_serializer_context(self):
         return {"type_id": self.kwargs.get('title_pk')}
@@ -341,9 +349,6 @@ class CertificateDatesViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, 
         return {"type_id": self.kwargs.get('title_pk')}
 
 
-
-
-
 class PersonBirthAddressViewSet(ModelViewSet):
     queryset = PersonBirthAddress.objects.optimized().all()
 
@@ -355,7 +360,7 @@ class PersonBirthAddressViewSet(ModelViewSet):
 
 class CountysViewSet(ModelViewSet):
     queryset = County.objects.optimized().all().order_by("name")
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsStaff]
     pagination_class = Pagination300
 
     def get_serializer_class(self):
@@ -366,7 +371,7 @@ class CountysViewSet(ModelViewSet):
 
 class TownViewSet(ModelViewSet):
     queryset = Town.objects.optimized().all().order_by("name")
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsStaff]
     pagination_class = Pagination300
 
     def get_serializer_class(self):
@@ -386,8 +391,8 @@ class HouseViewSet(ModelViewSet):
 
 class PersonViewSet(
 
-    mixins.ListModelMixin, mixins.RetrieveModelMixin, 
-    mixins.UpdateModelMixin, 
+    mixins.ListModelMixin, mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
     mixins.CreateModelMixin, mixins.DestroyModelMixin,
     GenericViewSet
 ):

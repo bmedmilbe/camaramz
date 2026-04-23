@@ -1,49 +1,14 @@
-# # class PDF():
-# #     pass
-import shutil
+
 from decimal import Decimal
 from io import BytesIO
-import os
-from django.http import HttpResponse
 from django.template.loader import get_template
 from xhtml2pdf import pisa
-from django.core.files import File
-import uuid
-from django.conf import settings
-#  require_once("files/dompdf/autoload.inc.php");
-#  use Dompdf\Dompdf;
 from django.core.files.storage import default_storage
 from certificates.classes.string_helper import StringHelper
-from certificates.models import Certificate, CertificateDate, CertificateTitle, CertificateTypes, Ifen, Person
-
+from certificates.models import Certificate, CertificateTitle, CertificateTypes, Ifen, Person
 from datetime import date, timedelta
 from io import BytesIO
 from django.core.files.base import ContentFile
-
-
-
-from pprint import pprint
-
-
-# class GeneratePDF(View):
-#     def get(self, request, *args, **kwargs):
-#         template = get_template('invoice.html')
-#         context = { "invoice_id": 123, "customer_name": "John Cooper", "amount": 1399.99, "today": "Today", }
-#         html = template.render(context)
-#         pdf = render_to_pdf('invoice.html', context)
-#         if pdf:
-#             response = HttpResponse(pdf, content_type='application/pdf')
-#             filename = "Invoice_%s.pdf" %("12341231")
-#             content = "inline; filename='%s'" %(filename)
-#             download = request.GET.get("download")
-#             if download:
-#                 content = "attachment; filename='%s'" %(filename)
-#                 response['Content-Disposition'] = content
-#                 return response
-
-#         return HttpResponse("Not found")
-
-# from storages.backends.s3boto3 import S3Boto3Storage
 
 
 class PDF():
@@ -79,15 +44,13 @@ class PDF():
         elif type2.id == 25:
             self.conta_details = self.conta(
                 type1, type2, gerado.number, self.data['change'].price)
-            
-        
+
         elif type2.id == 27:
 
             self.conta_details = self.conta(
                 type1, type2, gerado.number, self.data['range'].price)
-            
 
-        elif type2.id in [29,32]:
+        elif type2.id in [29, 32]:
             if not self.data['metros']:  # metros none
                 value = 250 * self.data['dates'].count()
             else:
@@ -113,36 +76,22 @@ class PDF():
         dash = ifen.size * " -"
 
         self.date = f"- - - Câmara Distrital de {self.bi.address.street.town.county.name}, na Cidade da Trindade, aos {self.date}."
-        # self.date = f"- - - Câmara Distrital de {self.bi.address.street.town.county.name}, na Cidade da {self.bi.address.street.town.name}, aos {self.date}."
-
-        # size = Ifen.objects.filter(name='DATA').first().size
-
-        
 
         self.date = f"{self.date}{dash[len(self.date):]}"
 
         ifen = Ifen.objects.get(name="texto")
-        resto = len(self.text)%88
-        dash = int((resto + (88-resto))) *"-"
-        # dash = (int(int(int(len(self.text))%92)) - 6) * "_ "
-        # - - - 
+        resto = len(self.text) % 88
+        dash = int((resto + (88 - resto))) * "-"
+
         self.text = f"{self.text}"
 
-        # self.footer = StringHelper.data(StringHelper,gerado.date_issue)
-        # Col
-        # Câmara Distrital de {{distrito}}, na Cidade da {{town}}, aos
-    #   {{date}}
-
         template = get_template("certificates/certificate_off.html")
-        
-        context = {}
+
         context_dict = {
             'body': self.text,
             'presidente': f"{self.presidente}",
-            # 'distrito':f"{self.distrito}",
             'distrito': f"{self.bi.address.street.town.county.name.upper()}",
             'town': f"{self.bi.address.street.town.name}",
-            # 'presidente':f"{self.presidente}, presidente da camarâ distrtrital de {self.distrito}",
             'certificate': self.certificate,
             'type1': self.type1,
             'type2': self.type2,
@@ -171,7 +120,7 @@ class PDF():
         # 3. Save to Storage (S3 or Local)
         # default_storage.save() automatically handles directory creation
         pdf_content = ContentFile(pdf_buffer.getvalue())
-        
+
         # Optional: Delete if it already exists to mimic your "shutil.rmtree" logic
         if default_storage.exists(full_path):
             default_storage.delete(full_path)
@@ -179,18 +128,13 @@ class PDF():
         # 4. Update the Model
         # We pass the ContentFile directly to the model field
         certificate = Certificate.objects.get(id=self.certificate.id)
-        
-        # certificate.file.save() takes the relative path and the content
+
         certificate.file.save(full_path, pdf_content)
-        
+
         return certificate.file.url, True
 
     def conta(self, type1: CertificateTypes, type2: CertificateTitle, atestado_number, autoV=0, cplp=False):
 
-        # pprint("type1:")
-        # pprint(type1)
-        # pprint("type2:")
-        # pprint(type2)
         value = type2.type_price
 
         Total = 0
@@ -224,7 +168,6 @@ class PDF():
         Zero = Emolumento + Rasa
         Rasa = 0 if Zero == 0 else Rasa
         Emolumento = 0 if Zero == 0 else Emolumento
-        # pprint(Emolumento)
         Emolumento = round(Emolumento, 2)
         Rasa = round(Rasa, 2)
         Selo = round(Selo, 2)
@@ -247,7 +190,7 @@ class PDF():
 
         newString = ""
 
-        for i in range(0, c+1):
+        for i in range(0, c + 1):
             newString = f"{newString}-"
 
         newString = f"{newString}{string}"
@@ -281,8 +224,6 @@ class PDF():
             text = f"""{text}
             - - - Válida até {validade}"""
         elif type1.id == 8:
-            # pprint("Aqui")
-            # pprint(StringHelper.ext_data(StringHelper,expire_date))
             rest = 5 * " -"
             size = 62 * " -"
             temp_text = f"- - - Válida até {StringHelper.ext_data(StringHelper,expire_date)}."
@@ -291,11 +232,3 @@ class PDF():
             - - - Às autoridades e mais a quem o conhecimento desta competir assim o tenham entendido.{rest[1:]}"""
 
         return text
-
-    def data(timestamp_date):
-        startdate = date.today()
-        data = StringHelper.DataEmExtenso(
-            startdate.day, startdate.month, startdate.year)
-        string = f"------Câmara Distrital de Mé-Zóchi, na Cidade da Trindade, aos {data}.{self.setTracoData()}"
-
-        return string
