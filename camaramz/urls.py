@@ -28,13 +28,12 @@ urlpatterns = [
     path("cms/", include("cms.urls")),
     path("certificates/", include("certificates.urls")),
     path("troca/", include("troca.urls")),
-    path("cms/", include("cms.urls")),
     path("setup/", include("setup.urls")),
     path("auth/", include("djoser.urls")),
     path("auth/", include("djoser.urls.jwt")),
-    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
-    path('api/swagger/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
-    path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
+    path('schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('swagger/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 
     path("__debug__/", include("debug_toolbar.urls")),
 ]

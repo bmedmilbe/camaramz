@@ -2,16 +2,27 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from certificates.models import (
-    Country, IDType, Instituition, Street, Town, County, 
+    Country, IDType, Instituition, Street, Town, County,
     University, Ifen, BiuldingType, Cemiterio, Change, CertificateTitle, Coval
 )
 from certificates.serializers import MetadataSerializer
 
+from django.shortcuts import render
+
+
+def api_home(request):
+    """
+    Renders the technical landing page for the Certificates API.
+    """
+    return render(request, 'api_home.html')
+
+
 class UnifiedMetadataView(APIView):
     """
-    Centralized metadata provider. 
+    Centralized metadata provider.
     Optimized with select_related to prevent N+1 query overhead.
     """
+
     def get(self, request):
         data = {
             "countries": Country.objects.all().order_by('name'),
@@ -30,13 +41,3 @@ class UnifiedMetadataView(APIView):
         }
         serializer = MetadataSerializer(data)
         return Response(serializer.data)
-
-
-
-
-
-
-   
-    
-
-
