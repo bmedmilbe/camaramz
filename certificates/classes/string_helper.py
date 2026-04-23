@@ -35,11 +35,10 @@ class StringHelper():
 
         return text[:-1]
 
-    
     def houseNumber(self, house_number):
         # implement Numero extenso
 
-        if not house_number or  house_number == None or house_number == -1 or house_number == "-1":
+        if not house_number or house_number is None or house_number == -1 or house_number == "-1":
             return f" numa casa não numerada, "
 
         if house_number.isnumeric():
@@ -74,7 +73,7 @@ class StringHelper():
 
         return f"{substring} {self.text(self, bi1, certificate_type, data)}"
 
-    def text(self, bi: Person, certificate_type,  data=None):
+    def text(self, bi: Person, certificate_type, data=None):
         # pprint("nono")
         # pprint(bi)
         vivo = ""
@@ -100,7 +99,7 @@ class StringHelper():
         return fathers
 
     def house_address(self, house: House):
-        
+
         return f"{self.houseNumber(self,house.house_number)} na localidade de {house.street.name}, Distrito de {house.street.town.county.name}"
 
     def street_address(self, street: Street):
@@ -113,9 +112,9 @@ class StringHelper():
         count = persons.count()
         index = 0
         for person in persons.all():
-            index = index+1
+            index = index + 1
             de_or_virgula = ", "
-            if index == count-1:
+            if index == count - 1:
                 de_or_virgula = " e"
             text = f"{text} d{StringHelper.oa(StringHelper,person.gender)} {StringHelper.toBold(person.name)}, nascid{StringHelper.oa(StringHelper,person.gender)} em {StringHelper.ext_data(StringHelper,person.birth_date)}{de_or_virgula} "
         return text
@@ -154,9 +153,9 @@ class StringHelper():
             index = 0
             count = len(members[member])
             for single_member in members[member]:
-                index = index+1
+                index = index + 1
                 de_or_virgula = ", "
-                if index == count-1:
+                if index == count - 1:
                     de_or_virgula = ", e "
 
                 text = f"{text}{StringHelper.toBold(single_member.name)}, nascid{StringHelper.oa(StringHelper,single_member.parent.gender)} em {StringHelper.ext_data(StringHelper,single_member.birth_date)}{de_or_virgula}"
@@ -166,9 +165,9 @@ class StringHelper():
         # pprint(text)
         return text
         for person in parents.all():
-            index = index+1
+            index = index + 1
             de_or_virgula = ", "
-            if index == count-1:
+            if index == count - 1:
                 de_or_virgula = " e"
             text = f"{text} {StringHelper.oa(StringHelper,person.gender)} {StringHelper.toBold(person.name)}, nascid{StringHelper.oa(StringHelper,person.gender)} em {StringHelper.ext_data(StringHelper,person.birth_date)}{de_or_virgula} "
         return text
@@ -203,7 +202,9 @@ class StringHelper():
         return f"{date.day}/{date.month}/{self.NumeroEmExtenso( date.year)}"
 
     def ext_data(self, date):
-        return f"{self.NumeroEmExtenso( date.day)} de {self.calendar_month(date.month)} de {self.NumeroEmExtenso( date.year)}"
+        if date is None:
+            return "Data não disponível"  # Or a sensible default
+        return f"{self.NumeroEmExtenso(date.day)} de {self.calendar_month(date.month)} de {self.NumeroEmExtenso(date.year)}"
 
     def ext_days(self, dates: CertificateDate):
 
@@ -221,7 +222,7 @@ class StringHelper():
             qtd = len(new_dates[month])
 
             if qtd == 1:
-                e = ", e " if count_super+1 == dates.count() - 1 else ", "
+                e = ", e " if count_super + 1 == dates.count() - 1 else ", "
 
                 text = f"{text}{self.ext_data(self,new_dates[month][0].date)}{e}"
                 count_super = count_super + 1
@@ -234,9 +235,9 @@ class StringHelper():
 
                 for single_date in new_dates[month]:
                     count_super = count_super + 1
-                    index = index+1
+                    index = index + 1
                     de_or_virgula = "" if index == count else ", "
-                    if index == count-1:
+                    if index == count - 1:
                         de_or_virgula = ", e "
                     text = f"{text}{self.NumeroEmExtenso(single_date.date.day)}{de_or_virgula}"
 
@@ -372,16 +373,16 @@ class StringHelper():
     def oa(self, genero):
         return "o" if genero == "M" else "a"
 
-    def oa2(self,  genero):
+    def oa2(self, genero):
         return "" if genero == "M" else "a"
 
-    def oa3(self,  genero):
+    def oa3(self, genero):
         return "" if genero == "M" else "à"
 
-    def oa4(self,  genero):
+    def oa4(self, genero):
         return "ao" if genero == "M" else "à"
 
-    def bi_sexo(self,  genero):
+    def bi_sexo(self, genero):
         return "masculino" if genero == "M" else "feminino"
 
     def NumeroCompleto(atestado_casa):
