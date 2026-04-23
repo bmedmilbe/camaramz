@@ -113,7 +113,7 @@ class PDF():
 
         # 2. Define your paths (S3 likes forward slashes)
         # This path is relative to your MEDIA_ROOT or S3 Bucket root
-        folder_name = f"certificates/{self.type2.id}-{self.type1.slug}-de-{self.type2.slug[10:]}"
+        folder_name = f"{self.type2.id}-{self.type1.slug}-de-{self.type2.slug[10:]}"[:50]
         file_name = f"{self.certificate.number}.pdf"
         full_path = f"{folder_name}/{file_name}"
 
