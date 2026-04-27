@@ -5,13 +5,13 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 
 from .models import (
-    Association, AssociationImages, Video, Budget, District, ExtraDoc, 
-    ExtraImages, ImagesTour, Information, Message, Partner, Post, 
-    PostDocument, PostFile, PostImage, PostVideo, Role, SecreatarySection, 
+    Association, AssociationImages, Law, Video, Budget, District, ExtraDoc,
+    ExtraImages, ImagesTour, Information, Message, Partner, Post,
+    PostDocument, PostFile, PostImage, PostVideo, Role, SecreatarySection,
     Secretary, Section, Team, Tour, YearGoals
 )
 from .serializers import (
-    AssociationSerializer, AssociationImageSerializer,
+    AssociationSerializer, AssociationImageSerializer, LawSerializer,
     VideoSerializer,
     BudgetSerializer,
     DistrictSerializer,
@@ -37,6 +37,7 @@ class IsTenantUser(BasePermission):
     Permission class to filter by tenant.
     Expects 'request.tenant' to be set by middleware.
     """
+
     def has_permission(self, request, view):
         return hasattr(request, 'tenant')
 
@@ -128,7 +129,8 @@ class ExtraDocViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets
     serializer_class = ExtraDocSerializer
 
     def get_queryset(self):
-        return ExtraDoc.objects.filter(tenant=self.request.tenant).prefetch_related('cms_extra_images').order_by('-date')
+        return ExtraDoc.objects.filter(tenant=self.request.tenant).prefetch_related(
+            'cms_extra_images').order_by('-date')
 
 
 # ExtraImages ViewSet
@@ -205,7 +207,7 @@ class RoleViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.Gen
 class PostViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     permission_classes = [IsTenantUser]
     lookup_field = 'slug'
-    
+
     filter_backends = [SearchFilter, OrderingFilter, DjangoFilterBackend]
     search_fields = ['title', 'description']
     ordering_fields = ['title', 'date', 'featured']
@@ -337,3 +339,18 @@ class YearGoalsViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewset
 
     def get_queryset(self):
         return YearGoals.objects.filter(tenant=self.request.tenant).order_by('-year')
+
+
+# Law ViewSet
+class LawViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+    permission_classes = [IsTenantUser]
+    lookup_field = 'slug'
+
+    filter_backends = [SearchFilter, OrderingFilter, DjangoFilterBackend]
+    search_fields = ['title',]
+    ordering = ['-aprovation_date']
+    filterset_fields = ['an_president', 'stp_president']
+    serializer_class = LawSerializer
+
+    def get_queryset(self):
+        return Law.objects.optimized().filter(tenant=self.request.tenant).order_by('-aprovation_date')

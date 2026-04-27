@@ -29,5 +29,5 @@ router.register("secretary-sections", views.SecreatarySectionViewSet, basename="
 router.register("teams", views.TeamViewSet, basename="teams")
 router.register("tours", views.TourViewSet, basename="tours")
 router.register("year-goals", views.YearGoalsViewSet, basename="year-goals")
-
+router.register("laws", views.LawViewSet, basename="laws")
 urlpatterns = router.urls
