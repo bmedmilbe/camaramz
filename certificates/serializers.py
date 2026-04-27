@@ -315,44 +315,39 @@ def remove_duplicates_keep_one(list_of_dicts, key_to_check):
 #         return f"{int(last_obj['number'].split('-')[0]) + 1}-{current_year}"
 #     return f"1-{current_year}"
 
-def get_number(current_year, certificates, instance, type_id):
+def get_number(current_year, certificates, instance, base_type_id):
     """
-    Generate the next certificate number.
-    Handles cases for both new certificates (create) and existing ones (update).
+    Generate the next sequential certificate number based on the base CertificateType.
+    Ensures that different titles under the same base type share the same sequence.
     """
-    # 1. If instance exists and already has the correct type, keep the number (Update case)
-    if instance and instance.type and instance.type.certificate_type:
-        # Check if the type is the same to avoid re-numbering
-        if int(instance.type.certificate_type.id) == int(type_id):
-            return instance.number
+    # 1. If updating an existing instance and the base type hasn't changed, keep the number.
+    # We check instance.type.certificate_type_id to see if it belongs to the same sequence group.
+    if instance and instance.type and instance.type.certificate_type_id == base_type_id:
+        return instance.number
 
-    # 2. Look for the last certificate of this type in the current year
-    last = certificates.last()
-    last_obj = None
+    # 2. Get all certificate numbers for this Base Type in the current year.
+    # We look for the pattern "Number-Year" (e.g., "15-2024").
+    existing_numbers = certificates.filter(
+        type__certificate_type_id=base_type_id,
+        date_issue__year=current_year,
+        number__contains=f"-{current_year}"
+    ).values_list('number', flat=True)
 
-    if last is not None:
-        # Filter items of the same group to find the highest sequence number
-        items = Certificate.objects.optimized().filter(
-            type__certificate_type__id=type_id,
-            date_issue__year=current_year,
-            number__endswith=str(current_year)
-        )
+    max_seq = 0
+    for num_str in existing_numbers:
+        try:
+            # Extract the numeric part before the hyphen
+            prefix = num_str.split('-')[0]
+            seq = int(prefix)
+            if seq > max_seq:
+                max_seq = seq
+        except (ValueError, IndexError):
+            # Skip numbers that don't follow the "int-year" format
+            continue
 
-        if items.exists():
-            items_list = list(items.values('number'))
-            # Sort by the numeric part before the hyphen
-            last_obj = sorted(
-                items_list,
-                key=lambda item: int(item['number'].split('-')[0]),
-                reverse=True
-            )[0]
-
-    # 3. Increment the number or start at 1
-    if last_obj:
-        next_seq = int(last_obj['number'].split('-')[0]) + 1
-        return f"{next_seq}-{current_year}"
-
-    return f"1-{current_year}"
+    # 3. Increment the highest found sequence or start at 1
+    next_seq = max_seq + 1
+    return f"{next_seq}-{current_year}"
 
 
 def set_number(current_year, type_id):
@@ -536,17 +531,29 @@ class BaseCertificateSerializer(serializers.ModelSerializer):
         return data
 
     def _prepare_certificate_data(self, validated_data, instance=None):
-        """Common logic to set numbering and type."""
-        current_year = date.today().year
-        type_id = int(self.context['type_id'])
+        """
+        Common logic to set sequential numbering and link the correct title.
+        This method ensures numbering is grouped by the base CertificateType.
+        """
+        from certificates.models import Certificate, CertificateTitle
 
-        certificates = Certificate.objects.optimized().filter(
-            type_id=type_id,
+        current_year = date.today().year
+        # type_id from context is usually the CertificateTitle ID
+        title_id = int(self.context['type_id'])
+
+        # Retrieve the title object to get its parent base type
+        title_obj = CertificateTitle.objects.select_related('certificate_type').get(pk=title_id)
+        base_type_id = title_obj.certificate_type.id
+
+        # Filter certificates belonging to the same base category for numbering
+        certificates_in_year = Certificate.objects.filter(
+            type__certificate_type_id=base_type_id,
             date_issue__year=current_year
         )
 
-        validated_data["number"] = get_number(current_year, certificates, instance, type_id)
-        validated_data["type_id"] = type_id
+        validated_data["number"] = get_number(current_year, certificates_in_year, instance, base_type_id)
+        validated_data["type"] = title_obj
+
         return validated_data
 
     def _finalize_certificate(self, certificate, validated_data, model_class):
