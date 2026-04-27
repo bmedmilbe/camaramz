@@ -287,10 +287,16 @@ class President(models.Model):
     name = models.TextField(unique=True)
     slug = models.SlugField(max_length=255, unique=True)
 
+    def __str__(self) -> str:
+        return self.name
+
 
 class Party(models.Model):
     name = models.TextField(unique=True)
     slug = models.SlugField(max_length=255, unique=True)
+
+    def __str__(self) -> str:
+        return self.name
 
 
 class LawQuerySet(models.QuerySet):
@@ -311,6 +317,9 @@ class Law(models.Model):
 
     tenant = models.ForeignKey(
         settings.TENANT_MODEL, on_delete=models.CASCADE, related_name="cms_laws")
+
+    def __str__(self) -> str:
+        return self.title
 
 
 class VoteQuerySet(models.QuerySet):
