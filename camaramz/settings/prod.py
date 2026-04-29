@@ -17,7 +17,7 @@ CORS_ALLOWED_ORIGINS = [
     "https://www.cmz.st",
     "https://cecab.st",
     "https://www.cecab.st",
-    "https://cecabnext.vercel.app"
+    "https://cecabnext.vercel.app",
     "https://kandja.vercel.app"
 ]
 
