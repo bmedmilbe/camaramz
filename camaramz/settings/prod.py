@@ -10,14 +10,15 @@ ALLOWED_HOSTS = ["camaramzapi-6cf2b687304f.herokuapp.com", ".railway.app", ".up.
 
 # --- CORS & CSRF CONFIGURATION ---
 CORS_ALLOW_ALL_ORIGINS = False
-CSRF_COOKIE_SAMESITE = 'None'  
-SESSION_COOKIE_SAMESITE = 'None' 
+CSRF_COOKIE_SAMESITE = 'None'
+SESSION_COOKIE_SAMESITE = 'None'
 CORS_ALLOWED_ORIGINS = [
-   "https://cmz.st",
+    "https://cmz.st",
     "https://www.cmz.st",
     "https://cecab.st",
     "https://www.cecab.st",
     "https://cecabnext.vercel.app"
+    "https://kandja.vercel.app"
 ]
 
 CORS_ALLOWED_ORIGIN_REGEXES = [
@@ -27,7 +28,7 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
 ]
 # Required for POST/PUT requests in production
 CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS + [
-   "https://*.vercel.app",  
+    "https://*.vercel.app",
     "https://*.railway.app",
     "https://*.up.railway.app",
 ]
@@ -35,15 +36,15 @@ CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS + [
 # HTTPS Security Headers
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SAMESITE = 'None'  
-SESSION_COOKIE_SAMESITE = 'None' 
+CSRF_COOKIE_SAMESITE = 'None'
+SESSION_COOKIE_SAMESITE = 'None'
 SECURE_SSL_REDIRECT = False
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 CORS_ALLOW_CREDENTIALS = True
 # --- DATABASE ---
 DATABASES = {
     "default": dj_database_url.config(
-        conn_max_age=600, 
+        conn_max_age=600,
         ssl_require=True
     )
 }
@@ -93,7 +94,7 @@ EMAILS = {
         "LOGO": "https://www.cecab.st/images/logo.png",
     },
     WEBSITES[3]: {
-        "EMAIL": "edmilbe@gmail.com", 
+        "EMAIL": "edmilbe@gmail.com",
         "TITLE": "Edmilbe Ramos",
         "PASSWORD": EMAIL_HOST_PASSWORD,
         "WEBSITE": "https://www.edmilbe.pro/",
