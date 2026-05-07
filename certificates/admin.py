@@ -8,10 +8,11 @@ import hashlib
 from openpyxl import load_workbook
 from . import models
 
-# Helper to avoid repetitive code in simple registrations
+
 class BaseAdmin(admin.ModelAdmin):
     list_per_page = 20
     ordering = ["name"]
+
 
 @admin.register(models.Customer)
 class CustomerAdmin(admin.ModelAdmin):
@@ -19,10 +20,12 @@ class CustomerAdmin(admin.ModelAdmin):
     ordering = ["user"]
     list_editable = ["backstaff"]
 
+
 @admin.register(models.Country, models.County, models.Town)
 class LocationAdmin(BaseAdmin):
     list_display = ["name"]
     prepopulated_fields = {"slug": ("name",)}
+
 
 @admin.register(models.Street)
 class StreetAdmin(admin.ModelAdmin):
@@ -30,6 +33,7 @@ class StreetAdmin(admin.ModelAdmin):
     list_editable = ["town"]
     prepopulated_fields = {"slug": ("name",)}
     list_per_page = 50
+
 
 @admin.register(models.Coval)
 class CovalsAdmin(admin.ModelAdmin):
@@ -45,11 +49,12 @@ class CovalsAdmin(admin.ModelAdmin):
             docx = BytesIO(response.content)
             workbook = load_workbook(filename=docx)
             sheet = workbook["Uploaded"]
-            
+
             for row in range(2, sheet.max_row + 1):
-                # Logic for card creation remains but should ideally 
+                # Logic for card creation remains but should ideally
                 # be moved to a background task or service layer
                 pass
+
 
 @admin.register(models.Person)
 class PersonAdmin(admin.ModelAdmin):
@@ -58,31 +63,33 @@ class PersonAdmin(admin.ModelAdmin):
     search_fields = ['name', 'surname', 'id_number']
     list_per_page = 20
 
+
 @admin.register(models.CertificateTitle)
 class CertificateTitleAdmin(admin.ModelAdmin):
     list_display = ["id", "name", "certificate_type", "type_price", "goal"]
     list_editable = ["certificate_type", "type_price", "goal"]
     prepopulated_fields = {"slug": ("name",)}
 
+
 @admin.register(models.Certificate)
 class CertificateAdmin(admin.ModelAdmin):
     list_display = ["type", "number", "date_issue", "main_person"]
     list_filter = ["type", "status"]
     search_fields = ['number']
-    
-    
+
 
 @admin.register(models.Ifen)
 class IfenAdmin(admin.ModelAdmin):
     list_display = ["name", "size"]
     list_editable = ["size"]
 
+
 # Register remaining simple models
 admin.site.register([
-    models.PersonBirthAddress, 
-    models.House, 
-    models.IDType, 
-    models.Parent, 
+    models.PersonBirthAddress,
+    models.House,
+    models.IDType,
+    models.Parent,
     models.CertificateRange,
     models.Cemiterio,
     models.BiuldingType,

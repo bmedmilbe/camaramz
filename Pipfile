@@ -34,6 +34,9 @@ django = "==5.0"
 pillow = "*"
 django-debug-toolbar = "*"
 drf-spectacular = "*"
+django-tenants = "*"
+pytest = "*"
+pytest-django = "*"
 
 [dev-packages]
 factory-boy = "*"

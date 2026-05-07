@@ -467,7 +467,7 @@ class Certificate(models.Model):
     obs = models.TextField(null=True)
 
     atestado_state = models.IntegerField(null=True, default=1)
-    type_id1 = models.IntegerField(null=True)
+    type_id1 = models.CharField(max_length=255, null=True)
 
     class Meta:
         indexes = [

@@ -6,7 +6,9 @@ from .common import *
 DEBUG = False
 # Use .get() with a fallback to prevent crashes during the Docker build phase
 SECRET_KEY = os.environ.get("SECRET_KEY", "temporary-secret-key-for-build")
-ALLOWED_HOSTS = ["camaramzapi-6cf2b687304f.herokuapp.com", ".railway.app", ".up.railway.app"]
+ALLOWED_HOSTS = ["camaramzapi-6cf2b687304f.herokuapp.com", ".railway.app", ".up.railway.app",
+                 "xmambos.com", ".xmambos.com"
+                 ]
 
 # --- CORS & CSRF CONFIGURATION ---
 CORS_ALLOW_ALL_ORIGINS = False
@@ -18,7 +20,8 @@ CORS_ALLOWED_ORIGINS = [
     "https://cecab.st",
     "https://www.cecab.st",
     "https://cecabnext.vercel.app",
-    "https://kandja.vercel.app"
+    "https://kandja.vercel.app",
+
 ]
 
 CORS_ALLOWED_ORIGIN_REGEXES = [
@@ -31,6 +34,10 @@ CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS + [
     "https://*.vercel.app",
     "https://*.railway.app",
     "https://*.up.railway.app",
+    "https://xmambos.com",
+    "https://www.xmambos.com",
+    "https://*.xmambos.com",
+
 ]
 
 # HTTPS Security Headers
@@ -48,6 +55,7 @@ DATABASES = {
         ssl_require=True
     )
 }
+DATABASES['default']['ENGINE'] = 'django_tenants.postgresql_backend'
 
 # --- AWS STORAGE ---
 AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID", "")

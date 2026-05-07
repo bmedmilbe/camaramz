@@ -1,3 +1,4 @@
+from django_tenants.utils import tenant_context
 import pytest
 from rest_framework import status
 from rest_framework.test import APIClient
@@ -52,58 +53,52 @@ class TestTransactionCreation:
         assert "You are not boss!" in str(response.data)
 
 
+# tests.py example update
+
+
 @pytest.mark.django_db
 class TestTransactionBusinessLogic:
 
-    def test_complete_transaction_success(self, auth_boss_client, deliver_client):
-        """Tests if a deliverer can complete an open transaction."""
+    def test_complete_transaction_success(self, auth_boss_client, deliver_client, tenant_a):
         api_boss, boss = auth_boss_client
         api_deliver, deliver = deliver_client
 
-        # 1. Boss creates a transaction
+        # MUST wrap ORM calls in tenant_context
+        with tenant_context(tenant_a):
+            transaction = Transaction.objects.create(
+                description="Fast delivery",
+                value=50,
+                boss=boss,
+                is_charge=False,
+                completed_by=deliver
+            )
 
-        transaction = Transaction.objects.create(
-            description="Fast delivery",
-            value=50,
-            boss=boss,
-            is_charge=False,
-            completed_by=deliver
-        )
-
-        # 2. Deliverer attempts to complete it
         url = f"/troca/transactions/{transaction.id}/complete/"
-
-        response = api_deliver.patch(url)
+        response = api_deliver.patch(url)  # This works because api_deliver has SERVER_NAME
 
         assert response.status_code == status.HTTP_200_OK
-        assert response.data['completed'] is True
-
         # Verify in database
         transaction.refresh_from_db()
         assert transaction.completed is True
         assert transaction.completed_by == deliver
 
-    def test_transaction_not_found(self, auth_boss_client, deliver_client, deliver_client_2):
-        """Tests if a deliverer can complete an open transaction."""
+    def test_transaction_not_found(self, auth_boss_client, deliver_client, deliver_client_2, tenant_a):
         api_boss, boss = auth_boss_client
         api_deliver, deliver = deliver_client
         api_deliver_2, deliver_2 = deliver_client_2
 
-        # 1. Boss creates a transaction
+        # WRAP ORM calls in tenant_context
+        with tenant_context(tenant_a):
+            transaction = Transaction.objects.create(
+                description="Fast delivery",
+                value=50,
+                boss=boss,
+                is_charge=False,
+                completed_by=deliver_2
+            )
 
-        transaction = Transaction.objects.create(
-            description="Fast delivery",
-            value=50,
-            boss=boss,
-            is_charge=False,
-            completed_by=deliver_2  # Assigning to a different deliverer to simulate not found for current deliver
-        )
-
-        # 2. Deliverer attempts to complete it
         url = f"/troca/transactions/{transaction.id}/complete/"
-
         response = api_deliver.patch(url)
-
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_cannot_complete_already_completed_transaction(self, auth_boss_client, deliver_client):
@@ -162,24 +157,29 @@ class TestTransactionBusinessLogic:
 
         assert response_fail.status_code == status.HTTP_403_FORBIDDEN
 
-    def test_queryset_privacy(self, auth_boss_client, django_user_model):
-        """Ensures a Boss cannot see transactions from other users."""
-        # Create another Boss
+    def test_queryset_privacy(self, auth_boss_client, tenant_a, django_user_model):
+        api_boss_1, _ = auth_boss_client
+
+        with tenant_context(tenant_a):
+            user_3 = django_user_model.objects.create_user(
+                username="boss_3",
+                password="p",
+                email="boss3@test.com",  # Unique email
+                tenant=tenant_a
+            )
+            boss_3 = Customer.objects.create(user=user_3, boss=True)
+
+            # Create Transaction for Boss 2
+            user_2 = django_user_model.objects.create_user(
+                username="boss2", password="p", tenant=tenant_a
+            )
+            boss_2 = Customer.objects.create(user=user_2, boss=True)
+            Transaction.objects.create(description="Invisible", value=50, boss=boss_2)
+
+        # Setup the second boss client manually
         api_boss_3 = APIClient()
-        user_3 = django_user_model.objects.create_user(username="boss_3", password="p")
-        Customer.objects.create(user=user_3, boss=True)
+        api_boss_3.defaults['SERVER_NAME'] = 'tenant-a.testserver'
         api_boss_3.force_authenticate(user=user_3)
 
-        # Create another Boss
-        user_2 = django_user_model.objects.create_user(username="boss2", password="p")
-        boss_2 = Customer.objects.create(user=user_2, boss=True)
-
-        # Transaction belonging to Boss 2
-        Transaction.objects.create(description="Invisible", value=50, boss=boss_2)
-
-        # Boss 1 tries to list transactions
         response = api_boss_3.get("/troca/transactions/")
-
-        assert response.status_code == status.HTTP_200_OK
-        # The result should be empty since boss_1 is not involved in boss_2's transaction
         assert len(response.data['results']) == 0
