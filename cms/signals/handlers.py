@@ -4,7 +4,7 @@ from django.conf import settings
 from django.db import connection
 from django.apps import apps  # Import apps helper
 from django_tenants.utils import schema_context
-from certificates.models import Customer
+from cms.models import Customer
 
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
@@ -24,7 +24,7 @@ def create_new_customer_for_new_user(sender, instance, created, **kwargs):
     with schema_context('public'):
         has_certificate_app = ClientApp.objects.filter(
             client__schema_name=current_schema,
-            app='troca',
+            app='cms',
             is_active=True
         ).exists()
 

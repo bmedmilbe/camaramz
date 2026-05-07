@@ -19,7 +19,7 @@ class TenantEmailOrPhoneBackend(ModelBackend):
         if request and request.path.startswith('/admin/'):
             try:
                 # Check for superuser by email or username
-                user = User.objects.get(Q(email=identifier) | Q(username=identifier))
+                user = User.objects.get((Q(email=identifier) | Q(username=identifier)) & Q(tenant=request.tenant))
                 if user.is_superuser or user.is_staff and user.check_password(password):
                     return user
             except User.DoesNotExist:
@@ -31,11 +31,13 @@ class TenantEmailOrPhoneBackend(ModelBackend):
 
         # 4. TENANT ISOLATION: Search for user matching identifier (Email OR Phone)
         # AND strictly belonging to the current request.tenant
+        pprint(request.tenant)
         try:
             user = User.objects.get(
                 (Q(email=identifier) | Q(phone=identifier)) &
                 Q(tenant=request.tenant)
             )
+            pprint(user.id)
         except (User.DoesNotExist, User.MultipleObjectsReturned):
             return None
 

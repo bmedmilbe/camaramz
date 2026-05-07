@@ -1,10 +1,11 @@
 from django.contrib import admin
+
 from .models import (
     Association, AssociationImages, Video, Budget, District,
     ExtraDoc, ExtraImages, Tour, ImagesTour, Post, PostDocument,
     PostFile, PostImage, PostVideo, Information, Role, Team,
     Secretary, Section, SecreatarySection, Partner, Message, YearGoals,
-    President, Party, Law, Vote
+    President, Party, Law, Vote, Customer
 )
 
 
@@ -102,6 +103,13 @@ class BaseTenantAdmin(admin.ModelAdmin):
 class AssociationAdmin(BaseTenantAdmin):
     list_display = ['name', 'district', 'tenant']
     inlines = [AssociationImagesInline]
+
+
+@admin.register(Customer)
+class CustomerAdmin(admin.ModelAdmin):
+    list_display = ["user", "backstaff"]
+    ordering = ["user"]
+    list_editable = ["backstaff"]
 
 
 @admin.register(Post)

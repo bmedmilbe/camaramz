@@ -3,6 +3,23 @@ from django.conf import settings
 from django.db.models import Prefetch
 
 
+class CustomerQuerySet(models.QuerySet):
+    def optimized(self):
+        return self.select_related("user__tenant")
+
+
+class Customer(models.Model):
+    objects = CustomerQuerySet.as_manager()
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="cms_customer")
+
+    level = models.IntegerField(default=1, null=True)
+    backstaff = models.BooleanField(default=False)
+
+    def __str__(self) -> str:
+        return f"{self.user.first_name} {self.user.last_name}"
+
+
 class AsssociationQuerySet(models.QuerySet):
     def optimized(self):
         return self.select_related('district', 'tenant').prefetch_related('cms_images')

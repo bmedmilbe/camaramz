@@ -13,9 +13,18 @@ APPEND_SLASH = False
 
 # --- APPS ---
 INSTALLED_APPS = [
+
+]
+
+SHARED_APPS = (
+    'django_tenants',  # mandatory
+    'core',  # you must list the app where your tenant model resides in
+
+    'django.contrib.contenttypes',
+
+    # everything below here is optional
     "django.contrib.admin",
     "django.contrib.auth",
-    "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
@@ -23,19 +32,33 @@ INSTALLED_APPS = [
     "django_filters",
     "corsheaders",
     "djoser",
-    "certificates",
-    "troca",
-    "cms",
     "setup",
-    "core",
     "storages",
     "mail_templated",
     "debug_toolbar",
     "drf_spectacular",
-]
+)
+
+TENANT_APPS = (
+    # your tenant-specific apps
+
+    "cms",
+    "certificates",
+    "troca",
+)
+
+CLIENT_APPS_MODEL = "core.ClientApp"
+
+
+INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
+# --- TENANT ---
+TENANT_MODEL = "core.Client"  # app.Model
+
+TENANT_DOMAIN_MODEL = "core.Domain"  # app.Model
 
 # --- MIDDLEWARE ---
 MIDDLEWARE = [
+    'django_tenants.middleware.main.TenantMainMiddleware',
     "debug_toolbar.middleware.DebugToolbarMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
@@ -63,8 +86,8 @@ TEMPLATES = [
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
+                'django.template.context_processors.request',
                 "django.template.context_processors.debug",
-                "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
             ],
@@ -81,12 +104,14 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-# --- TENANT ---
-TENANT_MODEL = "core.Tenant"
 
 AUTHENTICATION_BACKENDS = [
     'core.backends.TenantEmailOrPhoneBackend',
 ]
+
+DATABASE_ROUTERS = (
+    'django_tenants.routers.TenantSyncRouter',
+)
 
 # --- INTERNATIONALIZATION ---
 LANGUAGE_CODE = "en-us"
