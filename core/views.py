@@ -8,13 +8,26 @@ from certificates.models import (
 from certificates.serializers import MetadataSerializer
 
 from django.shortcuts import render
+from django.db import connection
 
 
 def api_home(request):
     """
-    Renders the technical landing page for the Certificates API.
+    Renders the technical landing page for the each Tenant API.
     """
-    return render(request, 'api_home.html')
+
+    # connection.schema_name is automatically set by django-tenants middleware
+    schema = connection.schema_name
+
+    if schema == 'public':
+        return render(request, 'public/index.html')
+
+    # Try to find a template for the specific tenant, fallback to a default
+    template_name = f'tenants/{schema}/index.html'
+
+    return render(request, template_name, {
+        'tenant_name': schema.upper()
+    })
 
 
 class UnifiedMetadataView(APIView):
