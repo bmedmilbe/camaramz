@@ -45,7 +45,6 @@ def tenant_get_app_list(self, request):
     """Filter admin apps: 'core' only for superusers, others by ClientApp."""
     app_list = original_get_app_list(request)
     tenant = _get_request_tenant(request)
-    print(app_list)
     # 1. Get the set of allowed apps from DB for this tenant
     allowed_app_labels = _tenant_allowed_app_labels(tenant) if tenant else set()
 

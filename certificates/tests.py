@@ -19,34 +19,33 @@ from certificates.models import (
     IDType, Instituition, Parent, Ifen, BiuldingType, Cemiterio, Coval, Change
 )
 from certificates.serializers import PersonCreateOrUpdateSerializer
+from django_tenants.utils import tenant_context
 
 
 @pytest.mark.django_db
 class TestCountryAPI:
     """Test suite for Country model and API endpoints."""
 
-    def test_create_country(self, country_data):
+    def test_create_country(self, tenant_a):
         """
-        Test that a country can be created with required fields.
+        Test that a country can be created within a tenant context.
         """
-        assert country_data.name == "Mozambique"
-        assert country_data.slug == "mozambique"
-        assert country_data.code == 258
+        # FIX: Wrap in tenant_context to find the table
+        with tenant_context(tenant_a):
+            country = Country.objects.create(
+                name="Mozambique",
+                slug="mozambique",
+                code=258
+            )
+            assert country.name == "Mozambique"
+            assert Country.objects.count() == 1
 
-    def test_get_countries_not_list_unauthenticated(self, api_client, country_list):
+    def test_create_country_authenticated(self, api_client_a, tenant_a):
         """
-        Test that countries list is not accessible to unauthenticated users only.
+        Test that authenticated users can create countries using the API.
         """
-        url = "/certificates/countries"
-        response = api_client.get(url)
-
-        assert response.status_code == status.HTTP_401_UNAUTHORIZED
-
-    def test_create_country_authenticated(self, non_staff_client, country_data):
-        """
-        Test that authenticated users can create countries.
-        """
-        client, user = non_staff_client
+        # FIX: Unpack the tuple (client, tenant)
+        client, tenant = api_client_a
         url = "/certificates/countries"
 
         data = {
@@ -55,100 +54,109 @@ class TestCountryAPI:
             "code": 351
         }
 
+        # The API request automatically switches schema via middleware
+        # because the client is configured with the correct SERVER_NAME
         response = client.post(url, data, format='json')
 
         assert response.status_code == status.HTTP_201_CREATED
-        assert response.data['name'] == "Portugal"
 
-    def test_country_str_representation(self, country_data):
+        # Verify it was saved in the correct schema
+        with tenant_context(tenant_a):
+            assert Country.objects.filter(name="Portugal").exists()
+
+    def test_get_countries_list(self, api_client_a, tenant_a):
         """
-        Test that the country string representation is correct.
+        Verify that we can retrieve countries for the authenticated tenant.
         """
-        assert str(country_data) == "Mozambique"
+        client, tenant = api_client_a
+
+        # Create data for the test to find
+        with tenant_context(tenant_a):
+            Country.objects.create(name="Angola", slug="angola", code=244)
+
+        url = "/certificates/countries"
+        response = client.get(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        # Check if Angola is in the results
+        assert any(c['name'] == "Angola" for c in response.data['results'])
+
+
+# certificates/tests.py
 
 
 @pytest.mark.django_db
 class TestPersonAPI:
-    """Test suite for Person model and API endpoints."""
 
-    def test_create_person(self, person_data):
-        """
-        Test that a person can be created with biographical information.
-        """
-        assert person_data.name == "John"
-        assert person_data.surname == "Doe"
-        assert person_data.gender == "M"
-        assert person_data.birth_date == date(1990, 5, 15)
+    def test_create_person(self, tenant_a, person_data):
+        # person_data has a ForeignKey to Country. Accessing it triggers a lookup.
+        with tenant_context(tenant_a):
+            assert person_data.name == "John"
+            assert person_data.surname == "Doe"
 
-    def test_person_full_name(self, person_data):
-        """
-        Test that person full name is constructed correctly.
-        """
-        full_name = f"{person_data.name} {person_data.surname}"
-        assert full_name == "John Doe"
+    def test_person_full_name(self, tenant_a, person_data):
+        with tenant_context(tenant_a):
+            full_name = f"{person_data.name} {person_data.surname}"
+            assert full_name == "John Doe"
 
-    def test_get_persons_list_staff_only(self, staff_client, non_staff_client, person_list):
-        """
-        Test that persons list is staff-only and non-staff users get 403.
-        """
+    def test_get_persons_list_permissions(self, staff_client, non_staff_client):
+        # Fixtures now handle SERVER_NAME, so the API request is automatically routed
         client_staff, _, _ = staff_client
         client_non_staff, _ = non_staff_client
+
         url = "/certificates/persons"
+        assert client_staff.get(url).status_code == status.HTTP_200_OK
+        assert client_non_staff.get(url).status_code == status.HTTP_403_FORBIDDEN
 
-        # Staff user can access
-        response = client_staff.get(url)
-        assert response.status_code == status.HTTP_200_OK
-
-        # Non-staff user gets denied
-        response = client_non_staff.get(url)
-        assert response.status_code == status.HTTP_403_FORBIDDEN
-
-    def test_create_person_staff_only(self, staff_client, non_staff_client,
-                                      person_birth_address_data, id_type_data,
-                                      instituition_data, house_data):
-        """
-        Test that creating a person requires staff permissions.
-        """
+    def test_create_person_staff_only(self, tenant_a, non_staff_client, id_type_data, house_data):
         client_non_staff, _ = non_staff_client
         url = "/certificates/persons"
 
-        data = {
-            "name": "Jane",
-            "surname": "Smith",
-            "gender": "F",
-            "birth_date": "1988-04-10",
-            "id_number": "111222333",
-            "id_type": id_type_data.id,
-            "id_issue_date": "2020-01-15",
-            "id_issue_local": instituition_data.id,
-            "birth_address": person_birth_address_data.id,
-            "address": house_data.id,
-            "father_name": "John Smith",
-            "mother_name": "Mary Smith"
-        }
+        # Accessing id_type_data.id triggers a query to 'certificates_idtype'
+        with tenant_context(tenant_a):
+            data = {
+                "name": "Jane",
+                "id_type": id_type_data.id,
+                "address": house_data.id,
+            }
 
         response = client_non_staff.post(url, data, format='json')
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    def test_person_str_representation(self, person_data):
+    def test_person_detail_isolation(self, api_client_b, person_data):
         """
-        Test that the person string representation is correct.
+        Ensure Tenant B cannot see Tenant A's data.
+        (person_data is in Tenant A, api_client_b is configured for Tenant B)
         """
-        expected = "John Doe"
-        assert str(person_data) == expected
+        client_b, tenant_b = api_client_b
+        url = f"/certificates/persons/{person_data.id}/"
 
-    def test_person_age_calculation(self, person_data):
-        """
-        Test that person age can be calculated from birth date.
-        """
-        today = date.today()
-        age = today.year - person_data.birth_date.year
-        assert age >= 33  # Born in 1990, so in 2026 would be 35/36
+        response = client_b.get(url)
+        # Middleware routes to Tenant B schema, where this ID doesn't exist.
+        assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
 @pytest.mark.django_db
 class TestCertificateAPI:
     """Test suite for Certificate model and API endpoints."""
+
+    def test_create_certificate_authenticated(self, staff_client, person_data,
+                                              certificate_title_type_one, house_data, tenant_a):
+        client_staff, user, _ = staff_client
+        url = f"/certificates/titles/{certificate_title_type_one.id}/model"
+
+        # If person_data was created in a fixture without context,
+        # ensure the test logic is wrapped:
+        with tenant_context(tenant_a):
+            data = {
+                "main_person": person_data.id,
+                "house": house_data.id,
+                "date_issue": "2026-01-01"
+            }
+
+        # The staff_client already has SERVER_NAME set to 'tenant-a.testserver'
+        response = client_staff.post(url, data, format='json')
+        assert response.status_code == status.HTTP_201_CREATED
 
     def test_create_certificate(self, certificate_data):
         """

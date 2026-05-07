@@ -9,6 +9,9 @@ from troca.models import Customer
 from certificates.models import CertificateSimplePerson, Customer as CertificateCustomer
 
 from datetime import date, timedelta
+# conftest.py additions
+from django_tenants.utils import tenant_context, schema_context
+from core.models import Client, Domain  # Import your new Client model
 
 User = get_user_model()
 
@@ -19,80 +22,142 @@ def api_client():
     return APIClient()
 
 
+@pytest.fixture(scope='session', autouse=True)
+def setup_public_tenant(django_db_setup, django_db_blocker):
+    """Essential: django-tenants needs a public schema to function."""
+    with django_db_blocker.unblock():
+        client, _ = Client.objects.get_or_create(
+            schema_name='public',
+            defaults={'name': 'Public'}
+        )
+        Domain.objects.get_or_create(
+            domain='testserver',  # Default for APIClient
+            tenant=client,
+            is_primary=True
+        )
+
+
 @pytest.fixture
-def auth_boss_client(db, django_user_model):
-    """Creates an authenticated Boss available for any test in any app."""
-    user = django_user_model.objects.create_user(username="boss_admin", password="password")
-    customer = Customer.objects.create(user=user, boss=True)
+def auth_boss_client(db, django_user_model, tenant_a):
+    """Authenticated client using unique email to avoid IntegrityError."""
+    with tenant_context(tenant_a):
+        user = django_user_model.objects.create_user(
+            username="boss_admin",
+            password="password",
+            email="boss_admin@test.com",  # Add unique email
+            tenant=tenant_a
+        )
+        from troca.models import Customer
+        customer = Customer.objects.create(user=user, boss=True)
 
     client = APIClient()
+    client.defaults['SERVER_NAME'] = 'tenant-a.testserver'
     client.force_authenticate(user=user)
     return client, customer
 
 
 @pytest.fixture
-def deliver_client(db, django_user_model):
-    """Creates an authenticated Deliverer available globally."""
-    user = django_user_model.objects.create_user(username="deliver_user", password="password")
-    customer = Customer.objects.create(user=user, is_deliver=True)
-
+def deliver_client(db, django_user_model, tenant_a):
+    with tenant_context(tenant_a):
+        user = django_user_model.objects.create_user(
+            username="deliver_user",
+            password="password",
+            email="deliver_1@test.com",  # Add unique email
+            tenant=tenant_a
+        )
+        customer = Customer.objects.create(user=user, is_deliver=True)
     client = APIClient()
+    client.defaults['SERVER_NAME'] = 'tenant-a.testserver'
     client.force_authenticate(user=user)
     return client, customer
 
 
 @pytest.fixture
-def deliver_client_2(db, django_user_model):
-    """Creates a second authenticated Deliverer available globally."""
-    user = django_user_model.objects.create_user(username="deliver_user_2", password="password")
-    customer = Customer.objects.create(user=user, is_deliver=True)
+def deliver_client_2(db, django_user_model, tenant_a):  # Add tenant_a
+    with tenant_context(tenant_a):
+        user = django_user_model.objects.create_user(
+            username="deliver_user_2",
+            password="password",
+            tenant=tenant_a
+        )
+        customer = Customer.objects.create(user=user, is_deliver=True)
 
     client = APIClient()
+    client.defaults['SERVER_NAME'] = 'tenant-a.testserver'
     client.force_authenticate(user=user)
     return client, customer
-
 
 # CMS App fixtures
 
+
 @pytest.fixture
 def tenant_a(db):
-    # Use get_or_create to avoid IntegrityError (unique name constraint)
-    tenant, _ = Tenant.objects.get_or_create(name="Tenant A", domain="a.com", subdomain="a.a.com")
+    """Creates a tenant and its required domain specifically in the public schema."""
+    with schema_context('public'):
+        tenant, _ = Client.objects.get_or_create(
+            schema_name='tenant_a',
+            defaults={'name': 'Tenant A'}
+        )
+        Domain.objects.get_or_create(
+            domain='tenant-a.testserver',
+            tenant=tenant,
+            is_primary=True
+        )
     return tenant
 
 
 @pytest.fixture
 def tenant_b(db):
-    tenant, _ = Tenant.objects.get_or_create(name="Tenant B", domain="b.com", subdomain="b.b.com")
+    """Creates a tenant and its required domain specifically in the public schema."""
+    with schema_context('public'):
+        tenant, _ = Client.objects.get_or_create(
+            schema_name='tenant_b',
+            defaults={'name': 'Tenant B'}
+        )
+        Domain.objects.get_or_create(
+            domain='tenant-b.testserver',
+            tenant=tenant,
+            is_primary=True
+        )
     return tenant
 
 
 @pytest.fixture
 def api_client_a(tenant_a):
-    # Create user with all required fields (added phone/email if necessary)
-    user, _ = User.objects.get_or_create(
-        username="user_a",
-        defaults={
-            "email": "user_a@test.com",
-            "phone": "123456789",
-            "tenant": tenant_a
-        }
-    )
-    user.set_password("password")
-    user.save()
+    from django_tenants.utils import tenant_context
+    with tenant_context(tenant_a):
+        user, _ = User.objects.get_or_create(
+            username="user_a_cms",
+            defaults={
+                "email": "user_a_cms@test.com",
+                "phone": "123456789",
+                "tenant": tenant_a
+            }
+        )
+        user.set_password("password")
+        user.save()
 
     client = APIClient()
+    # Set the domain so the middleware routes to tenant_a
+    client.defaults['SERVER_NAME'] = 'tenant-a.testserver'
     client.force_authenticate(user=user)
-    client.credentials(HTTP_X_TENANT_ID=str(tenant_a.id))
     return client, tenant_a
 
 
 @pytest.fixture
 def api_client_b(tenant_b, django_user_model):
-    user = django_user_model.objects.create_user(username="user_b", password="password", tenant=tenant_b)
+    from django_tenants.utils import tenant_context
+    with tenant_context(tenant_b):
+        user = django_user_model.objects.create_user(
+            username="user_b_cms",
+            password="password",
+            email="user_b_cms@test.com",
+            tenant=tenant_b
+        )
     client = APIClient()
+    # Set the domain so the middleware routes to tenant_b
+    client.defaults['SERVER_NAME'] = 'tenant-b.testserver'
     client.force_authenticate(user=user)
-    client.credentials(HTTP_X_TENANT_ID=str(tenant_b.id))
     return client, tenant_b
 
 
@@ -103,7 +168,7 @@ def admin_user_with_tenant(db, tenant_a):
     """
     return User.objects.create_superuser(
         username="admin_test",
-        email="admin@test.com",
+        email="admin @ test.com",
         password="password",
         phone="999999999",  # Add this if your manager requires it
         tenant=tenant_a     # Superusers usually need a default tenant too
@@ -113,76 +178,77 @@ def admin_user_with_tenant(db, tenant_a):
 # Certificates App Fixtures
 
 @pytest.fixture(autouse=True)
-def setup_essential_metadata(db):
-    """
-    Populates essential metadata required by serializers and models
-    to prevent DoesNotExist and AttributeError errors during tests.
-    """
-    from django.utils import timezone
-    from certificates.models import (
-        Ifen, CertificateTypes, CertificateTitle,
-        Parent, CertificateSinglePerson, CertificateSimpleParent
-    )
+def setup_essential_metadata(db, tenant_a):
+    """Wrap all setup logic in the tenant context."""
+    from django_tenants.utils import tenant_context
 
-    # 1. Setup Ifen records (required for document rendering)
-    Ifen.objects.get_or_create(name="data", defaults={"size": 1000})
-    Ifen.objects.get_or_create(name="texto", defaults={"size": 1000})
+    with tenant_context(tenant_a):
+        # Move all your existing logic here
+        from django.utils import timezone
+        from certificates.models import (
+            Ifen, CertificateTypes, CertificateTitle,
+            Parent, CertificateSinglePerson, CertificateSimpleParent
+        )
 
-    # 2. Setup CertificateType (Base type)
-    cert_type_base, _ = CertificateTypes.objects.get_or_create(
-        name="Standard Type"
-    )
+        # 1. Setup Ifen records (required for document rendering)
+        Ifen.objects.get_or_create(name="data", defaults={"size": 1000})
+        Ifen.objects.get_or_create(name="texto", defaults={"size": 1000})
 
-    # 3. Setup CertificateTitle (ID 12 is critical for FifthSerializer logic)
-    title_12, _ = CertificateTitle.objects.get_or_create(
-        id=12,
-        defaults={
-            "name": "General Purpose Certificate",
-            "certificate_type": cert_type_base,
-            "type_price": 100.00,
-            "slug": "generic-cert-12",
-            "goal": "Testing"
-        }
-    )
+        # 2. Setup CertificateType (Base type)
+        cert_type_base, _ = CertificateTypes.objects.get_or_create(
+            name="Standard Type"
+        )
 
-    # 4. Setup Parent record (Required for CertificateSimpleParent)
-    parent_obj, _ = Parent.objects.get_or_create(
-        title="Father",
-        defaults={
-            "in_plural": "Fathers",
-            "in_plural_mix": "Parents",
-            "degree": 1,
-            "gender": "M"
-        }
-    )
+        # 3. Setup CertificateTitle (ID 12 is critical for FifthSerializer logic)
+        title_12, _ = CertificateTitle.objects.get_or_create(
+            id=12,
+            defaults={
+                "name": "General Purpose Certificate",
+                "certificate_type": cert_type_base,
+                "type_price": 100.00,
+                "slug": "generic-cert-12",
+                "goal": "Testing"
+            }
+        )
 
-    # 5. Add CertificateSinglePerson (Satisfies count() check in FifthSerializer)
-    CertificateSinglePerson.objects.get_or_create(
-        type=title_12,
-        name="Default Single Person",
-        defaults={"gender": "M"}
-    )
+        # 4. Setup Parent record (Required for CertificateSimpleParent)
+        parent_obj, _ = Parent.objects.get_or_create(
+            title="Father",
+            defaults={
+                "in_plural": "Fathers",
+                "in_plural_mix": "Parents",
+                "degree": 1,
+                "gender": "M"
+            }
+        )
 
-    # 6. Add CertificateSimpleParent (Satisfies count() check in FifthSerializer)
-    # Note: Use the model name correctly as defined in your models.py
-    sp = CertificateSimpleParent.objects.get_or_create(
-        type=title_12,
-        name="Default Child",
-        defaults={
-            "birth_date": timezone.now().date(),
-            "parent": parent_obj
-        }
-    )
-    # 7. Setup CertificateSimplePerson (The one you just added)
-    # Satisfies the: CertificateSimplePerson.objects.filter(type_id=12).count() check
-    CertificateSimplePerson.objects.update_or_create(
-        type=title_12,
-        name="Default Simple Person",
-        defaults={
-            "gender": "M",
-            "birth_date": timezone.now().date()
-        }
-    )
+        # 5. Add CertificateSinglePerson (Satisfies count() check in FifthSerializer)
+        CertificateSinglePerson.objects.get_or_create(
+            type=title_12,
+            name="Default Single Person",
+            defaults={"gender": "M"}
+        )
+
+        # 6. Add CertificateSimpleParent (Satisfies count() check in FifthSerializer)
+        # Note: Use the model name correctly as defined in your models.py
+        sp = CertificateSimpleParent.objects.get_or_create(
+            type=title_12,
+            name="Default Child",
+            defaults={
+                "birth_date": timezone.now().date(),
+                "parent": parent_obj
+            }
+        )
+        # 7. Setup CertificateSimplePerson (The one you just added)
+        # Satisfies the: CertificateSimplePerson.objects.filter(type_id=12).count() check
+        CertificateSimplePerson.objects.update_or_create(
+            type=title_12,
+            name="Default Simple Person",
+            defaults={
+                "gender": "M",
+                "birth_date": timezone.now().date()
+            }
+        )
 
 
 @pytest.fixture
@@ -222,43 +288,42 @@ def staff_user_with_customer(db, tenant_a):
 
 
 @pytest.fixture
-def staff_client(staff_user_with_customer, tenant_a):
-    """
-    Returns an authenticated API client for a staff user.
-    """
-    user, customer = staff_user_with_customer
-    client = APIClient()
-    client.force_authenticate(user=user)
-    client.credentials(HTTP_X_TENANT_ID=str(tenant_a.id))
-    return client, user, customer
-
-
-@pytest.fixture
 def non_staff_user(db, tenant_a):
-    """
-    Creates a regular user without staff privileges.
-    """
-    user = User.objects.create_user(
-        username="regular_user",
-        password="password",
-        email="user@test.com",
-        phone="222222222",
-        tenant=tenant_a
-    )
-
-    CertificateCustomer.objects.create(user=user, backstaff=False)
+    """Creates a regular user inside the tenant schema."""
+    from django_tenants.utils import tenant_context
+    with tenant_context(tenant_a):
+        user = User.objects.create_user(
+            username="regular_user",
+            password="password",
+            email="user@test.com",
+            phone="222222222",
+            tenant=tenant_a
+        )
+        CertificateCustomer.objects.create(user=user, backstaff=False)
     return user
 
 
 @pytest.fixture
-def non_staff_client(non_staff_user, tenant_b):
-    """
-    Returns an authenticated API client for a non-staff user.
-    """
+def staff_client(staff_user_with_customer, tenant_a):
+    user, customer = staff_user_with_customer
     client = APIClient()
-    client.force_authenticate(user=non_staff_user)
-    client.credentials(HTTP_X_TENANT_ID=str(tenant_b.id))
-    return client, non_staff_user
+
+    # 1. This tells the Middleware to route requests to the tenant_a schema
+    client.defaults['SERVER_NAME'] = 'tenant-a.testserver'
+
+    # 2. Wrap authentication in context so it can find the 'Customer' table
+    with tenant_context(tenant_a):
+        client.force_authenticate(user=user)
+        return client, user, customer
+
+
+@pytest.fixture
+def non_staff_client(non_staff_user, tenant_a):
+    client = APIClient()
+    client.defaults['SERVER_NAME'] = 'tenant-a.testserver'
+    with tenant_context(tenant_a):
+        client.force_authenticate(user=non_staff_user)
+        return client, non_staff_user
 
 
 @pytest.fixture
