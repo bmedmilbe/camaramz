@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kandjá | Portal Jurídico Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <style>
+      .bg-kandja-navy {
+        background-color: #0a192f;
+      }
+      .text-kandja-lime {
+        color: #84cc16;
+      }
+      .bg-kandja-lime {
+        background-color: #84cc16;
+      }
+      .border-kandja-lime {
+        border-color: #84cc16;
+      }
+    </style>
+  </head>
+  <body class="bg-slate-50 font-sans antialiased text-slate-900">
+    <header
+      class="bg-kandja-navy py-12 text-white border-b-4 border-kandja-lime"
+    >
+      <div class="container mx-auto px-6">
+        <div
+          class="flex flex-col md:flex-row items-center justify-between gap-6"
+        >
+          <div class="text-center md:text-left">
+            <h1
+              class="text-4xl md:text-5xl font-black italic tracking-tighter text-kandja-lime"
+            >
+              KANDJÁ
+            </h1>
+            <p
+              class="text-white font-bold text-sm mt-2 tracking-widest uppercase"
+            >
+              A clareza que o cidadão merece
+            </p>
+          </div>
+          <div class="flex items-center gap-4">
+            <a
+              href="/admin/"
+              class="bg-kandja-lime hover:bg-lime-500 text-kandja-navy px-6 py-2 rounded-lg font-black transition-all flex items-center text-sm shadow-lg shadow-lime-500/20"
+            >
+              <i class="fas fa-user-shield mr-2"></i> ADMIN PORTAL
+            </a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="container mx-auto px-6 -mt-8">
+      <div class="max-w-4xl mx-auto">
+        <div
+          class="bg-white p-10 rounded-3xl shadow-2xl border border-slate-100"
+        >
+          <div
+            class="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4"
+          >
+            <div>
+              <h2 class="text-2xl font-extrabold text-slate-800">
+                Management Suite
+              </h2>
+              <p class="text-slate-500 font-medium">
+                Content & Administrative Control
+              </p>
+            </div>
+            <span
+              class="bg-lime-100 text-lime-700 text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-wider"
+            >
+              Full Tenant Access
+            </span>
+          </div>
+
+          <p class="text-slate-600 text-lg mb-10 leading-relaxed">
+            Update the independent legal database and manage administrative
+            records directly for the
+            <strong>kandja.vercel.app</strong> frontend. Engineered with
+            Row-Level Security for 100% data isolation[cite: 23].
+          </p>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
+            <a
+              href="/cms/"
+              class="group bg-kandja-navy p-6 rounded-2xl hover:bg-slate-800 transition-all shadow-lg text-center md:text-left"
+            >
+              <i
+                class="fas fa-file-invoice text-kandja-lime text-3xl mb-4 block"
+              ></i>
+              <h4 class="text-white font-bold text-lg">CMS App</h4>
+              <p class="text-slate-400 text-xs mt-1">Manage legal content.</p>
+            </a>
+
+            <a
+              href="/admin/"
+              class="group bg-white border-2 border-slate-900 p-6 rounded-2xl hover:bg-slate-50 transition-all shadow-sm text-center md:text-left"
+            >
+              <i class="fas fa-lock text-slate-800 text-3xl mb-4 block"></i>
+              <h4 class="text-slate-800 font-bold text-lg">Admin Suite</h4>
+              <p class="text-slate-500 text-xs mt-1">
+                Direct record management.
+              </p>
+            </a>
+
+            <a
+              href="https://kandja.vercel.app/"
+              target="_blank"
+              class="group bg-white border-2 border-slate-100 p-6 rounded-2xl hover:border-kandja-lime transition-all shadow-sm text-center md:text-left"
+            >
+              <i
+                class="fas fa-globe text-slate-400 group-hover:text-kandja-lime text-3xl mb-4 block"
+              ></i>
+              <h4 class="text-slate-800 font-bold text-lg">Public Portal</h4>
+              <p class="text-slate-500 text-xs mt-1">View live site.</p>
+            </a>
+          </div>
+
+          <div
+            class="border-t border-slate-100 pt-6 flex flex-wrap gap-6 justify-center"
+          >
+            <div class="flex items-center text-xs font-mono text-slate-400">
+              <i class="fas fa-lock mr-2 text-kandja-lime"></i> 100% DATA
+              ISOLATION [cite: 23]
+            </div>
+            <div class="flex items-center text-xs font-mono text-slate-400">
+              <i class="fas fa-database mr-2 text-kandja-lime"></i> POSTGRESQL
+              ACID [cite: 15]
+            </div>
+            <div class="flex items-center text-xs font-mono text-slate-400">
+              <i class="fas fa-shield-alt mr-2 text-kandja-lime"></i> RLS
+              ENFORCED [cite: 23]
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="mt-20 py-12 border-t border-slate-200 text-center">
+      <p
+        class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2"
+      >
+        Systems Engineering
+      </p>
+      <p class="text-slate-900 font-extrabold text-xl">Edmilbe Ramos</p>
+      <p class="text-slate-500 text-sm">
+        Junior Full-Stack Developer | Python & Django Specialist [cite: 2]
+      </p>
+    </footer>
+  </body>
+</html>

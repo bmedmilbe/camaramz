@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CMZ Portal | Goverment Multi-Tenant Node</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+  </head>
+  <body class="bg-slate-50 font-sans antialiased text-slate-900">
+    <header class="bg-slate-900 py-12 text-white border-b-4 border-emerald-500">
+      <div class="container mx-auto px-6">
+        <div
+          class="flex flex-col md:flex-row items-center justify-between gap-6"
+        >
+          <div>
+            <span
+              class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest"
+            >
+              Municipal Government Instance
+            </span>
+            <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight mt-4">
+              CMZ Administrative Gateway
+            </h1>
+            <p class="text-slate-400 mt-2 font-mono text-sm">
+              Tenant ID: CMZ_GOV_01 • High-Security Environment
+            </p>
+          </div>
+          <div class="flex gap-4">
+            <a
+              href="/admin/"
+              class="bg-emerald-600 hover:bg-emerald-500 px-6 py-2 rounded-lg font-bold transition-all flex items-center"
+            >
+              <i class="fas fa-user-shield mr-2"></i> Admin Login
+            </a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="container mx-auto px-6 -mt-8">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div
+          class="bg-white p-8 rounded-2xl shadow-xl border-t-4 border-emerald-500 transition-transform hover:-translate-y-1"
+        >
+          <div class="flex items-center justify-between mb-6">
+            <div class="bg-emerald-100 p-3 rounded-xl text-emerald-600">
+              <i class="fas fa-file-contract text-2xl"></i>
+            </div>
+            <span
+              class="bg-emerald-100 text-emerald-700 text-xs font-bold px-2.5 py-1 rounded"
+              >CRITICAL SERVICE</span
+            >
+          </div>
+          <h3 class="font-bold text-2xl text-slate-800 mb-2">
+            Certificates Registry
+          </h3>
+          <p class="text-slate-600 mb-6 leading-relaxed">
+            Digitized legal issuance system. Manages 15+ models with dynamic
+            serializer dispatching and ACID-compliant transaction locking.
+          </p>
+          <div class="flex items-center gap-4">
+            <a
+              href="/certificates/"
+              class="bg-slate-900 text-white px-6 py-2 rounded-lg font-semibold hover:bg-slate-800 transition"
+            >
+              Manage Registry
+            </a>
+            <span class="text-xs text-slate-400 italic"
+              ><i class="fas fa-lock mr-1"></i> Row-Level Isolation Active</span
+            >
+          </div>
+        </div>
+
+        <div
+          class="bg-white p-8 rounded-2xl shadow-xl border-t-4 border-blue-500 transition-transform hover:-translate-y-1"
+        >
+          <div class="flex items-center justify-between mb-6">
+            <div class="bg-blue-100 p-3 rounded-xl text-blue-600">
+              <i class="fas fa-edit text-2xl"></i>
+            </div>
+            <span
+              class="bg-blue-100 text-blue-700 text-xs font-bold px-2.5 py-1 rounded"
+              >ACTIVE</span
+            >
+          </div>
+          <h3 class="font-bold text-2xl text-slate-800 mb-2">CMS Portal</h3>
+          <p class="text-slate-600 mb-6 leading-relaxed">
+            Manage public-facing institutional content for
+            <strong>cmz.st</strong>. Optimized for SEO and real-time frontend
+            updates via Next.js.
+          </p>
+          <a
+            href="/cms/"
+            class="text-blue-600 font-bold hover:text-blue-800 flex items-center"
+          >
+            Edit Content <i class="fas fa-external-link-alt ml-2 text-sm"></i>
+          </a>
+        </div>
+      </div>
+
+      <section class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div
+          class="bg-slate-100/50 border border-slate-200 p-4 rounded-xl text-center"
+        >
+          <p class="text-slate-500 text-xs uppercase font-bold tracking-widest">
+            Uptime
+          </p>
+          <p class="text-2xl font-mono font-bold text-slate-800">99.9%</p>
+        </div>
+        <div
+          class="bg-slate-100/50 border border-slate-200 p-4 rounded-xl text-center"
+        >
+          <p class="text-slate-500 text-xs uppercase font-bold tracking-widest">
+            Security
+          </p>
+          <p class="text-2xl font-mono font-bold text-emerald-600">
+            ACID Verified
+          </p>
+        </div>
+        <div
+          class="bg-slate-100/50 border border-slate-200 p-4 rounded-xl text-center"
+        >
+          <p class="text-slate-500 text-xs uppercase font-bold tracking-widest">
+            Efficiency Boost
+          </p>
+          <p class="text-2xl font-mono font-bold text-blue-600">+40%</p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="mt-20 py-8 border-t border-slate-200 bg-white">
+      <div class="container mx-auto px-6 text-center">
+        <p
+          class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2"
+        >
+          Engineered & Maintained By
+        </p>
+        <p class="text-slate-800 font-bold">Edmilbe Ramos</p>
+        <p class="text-slate-500 text-sm">
+          Junior Full-Stack Developer | Python & Django Specialist
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>

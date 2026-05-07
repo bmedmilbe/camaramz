@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Troca | Fintech & Exchange Gateway</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+  </head>
+  <body class="bg-slate-50 font-sans antialiased text-slate-900">
+    <header class="bg-slate-900 py-12 text-white border-b-4 border-purple-600">
+      <div class="container mx-auto px-6">
+        <div
+          class="flex flex-col md:flex-row items-center justify-between gap-6"
+        >
+          <div class="text-center md:text-left">
+            <span
+              class="bg-purple-500/10 text-purple-400 border border-purple-500/20 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest"
+            >
+              Fintech Integration Node
+            </span>
+            <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight mt-4">
+              Troca Exchange Interface
+            </h1>
+            <p class="text-slate-400 mt-2 font-mono text-sm">
+              Service: TROCA_FIN_INT • Status: ACID Verified
+            </p>
+          </div>
+          <div class="flex gap-4">
+            <a
+              href="/admin/"
+              class="bg-purple-600 hover:bg-purple-500 px-6 py-2 rounded-lg font-bold transition-all flex items-center shadow-lg shadow-purple-600/20"
+            >
+              <i class="fas fa-vault mr-2"></i> Financial Admin
+            </a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="container mx-auto px-6 -mt-8">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div
+          class="lg:col-span-2 bg-white p-8 rounded-3xl shadow-xl border border-slate-100"
+        >
+          <div class="flex items-center gap-4 mb-6">
+            <div class="bg-purple-100 p-4 rounded-2xl text-purple-600">
+              <i class="fas fa-sync-alt text-3xl"></i>
+            </div>
+            <div>
+              <h3 class="font-extrabold text-2xl text-slate-800">
+                Exchange & Integration
+              </h3>
+              <p class="text-purple-600 font-semibold italic">
+                External Interface
+              </p>
+            </div>
+          </div>
+
+          <p class="text-slate-600 text-lg mb-8 leading-relaxed">
+            Core fintech module managing concurrent administrative workflows and
+            financial records. Utilizes <strong>Pessimistic Locking</strong> to
+            ensure data integrity during high-frequency exchange operations.
+          </p>
+
+          <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200 mb-8">
+            <h4
+              class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4"
+            >
+              Connected Frontend
+            </h4>
+            <div class="flex items-center justify-between">
+              <span class="font-mono text-sm text-slate-700"
+                >troca-4apd.vercel.app</span
+              >
+              <a
+                href="https://troca-4apd.vercel.app/"
+                target="_blank"
+                class="text-purple-600 hover:text-purple-800 font-bold flex items-center"
+              >
+                Launch App <i class="fas fa-external-link-alt ml-2 text-xs"></i>
+              </a>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap gap-4">
+            <a
+              href="/troca/"
+              class="bg-slate-900 text-white px-8 py-3 rounded-xl font-bold hover:bg-slate-800 transition shadow-lg"
+            >
+              View API Integration
+            </a>
+            <a
+              href="/swagger/"
+              class="bg-white border border-slate-200 text-slate-600 px-8 py-3 rounded-xl font-bold hover:bg-slate-50 transition"
+            >
+              Technical Docs
+            </a>
+          </div>
+        </div>
+
+        <div class="space-y-6">
+          <div
+            class="bg-white p-6 rounded-3xl shadow-lg border border-slate-100"
+          >
+            <h4 class="font-bold text-slate-800 mb-4 flex items-center">
+              <i class="fas fa-shield-check text-emerald-500 mr-2"></i> Security
+              Layer
+            </h4>
+            <ul class="text-sm text-slate-500 space-y-3">
+              <li class="flex items-start">
+                <i class="fas fa-check-circle text-emerald-500 mt-1 mr-2"></i>
+                <span>100% Data Isolation via Custom Middleware</span>
+              </li>
+              <li class="flex items-start">
+                <i class="fas fa-check-circle text-emerald-500 mt-1 mr-2"></i>
+                <span>ACID Compliant Transactions</span>
+              </li>
+              <li class="flex items-start">
+                <i class="fas fa-check-circle text-emerald-500 mt-1 mr-2"></i>
+                <span>Type-safe API Consumption</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="bg-purple-600 p-6 rounded-3xl shadow-lg text-white">
+            <p class="text-xs font-bold uppercase tracking-widest opacity-70">
+              Developer Note
+            </p>
+            <p class="text-sm mt-2 italic">
+              "Engineered for high-security environments, maintaining 99.9%
+              uptime for mission-critical platforms."
+            </p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="mt-20 py-12 text-center bg-white border-t border-slate-200">
+      <p
+        class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2"
+      >
+        Systems Engineering
+      </p>
+      <p class="text-slate-900 font-extrabold">Edmilbe Ramos</p>
+      <p class="text-slate-500 text-sm">
+        Junior Full-Stack Developer | Python, Django & React Specialist
+      </p>
+    </footer>
+  </body>
+</html>
