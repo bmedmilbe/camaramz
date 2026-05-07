@@ -158,13 +158,14 @@ class TestCertificateAPI:
         response = client_staff.post(url, data, format='json')
         assert response.status_code == status.HTTP_201_CREATED
 
-    def test_create_certificate(self, certificate_data):
+    def test_create_certificate(self, certificate_data, tenant_a):
         """
         Test that a certificate can be created with required data.
         """
-        assert certificate_data.main_person.name == "John"
-        assert certificate_data.number == "001-2026"
-        assert certificate_data.status == "issued"
+        with tenant_context(tenant_a):
+            assert certificate_data.main_person.name == "John"
+            assert certificate_data.number == "001-2026"
+            assert certificate_data.status == "issued"
 
     def test_get_certificates_list_staff_only(self, staff_client, non_staff_client, certificate_data):
         """
@@ -214,21 +215,23 @@ class TestCertificateAPI:
         response = client_staff.get(url)
         assert response.status_code == status.HTTP_200_OK
 
-    def test_certificate_number_format(self, certificate_data):
+    def test_certificate_number_format(self, certificate_data, tenant_a):
         """
         Test that certificate number follows the expected format (XXX-YYYY).
         """
-        parts = certificate_data.number.split('-')
-        assert len(parts) == 2
-        assert parts[0].isdigit()
-        assert parts[1].isdigit()
+        with tenant_context(tenant_a):
+            parts = certificate_data.number.split('-')
+            assert len(parts) == 2
+            assert parts[0].isdigit()
+            assert parts[1].isdigit()
 
-    def test_certificate_str_representation(self, certificate_data):
+    def test_certificate_str_representation(self, certificate_data, tenant_a):
         """
         Test that the certificate string representation is correct.
         """
-        expected = f"Residence Certificate {certificate_data.number}"
-        assert str(certificate_data) == expected
+        with tenant_context(tenant_a):
+            expected = f"Residence Certificate {certificate_data.number}"
+            assert str(certificate_data) == expected
 
 
 @pytest.mark.django_db
@@ -266,45 +269,50 @@ class TestCertificateTitleAPI:
         response = client_staff.get(url)
         assert response.status_code == status.HTTP_200_OK
 
-    def test_certificate_title_price(self, certificate_title_data):
+    def test_certificate_title_price(self, certificate_title_data, tenant_a):
         """
         Test that certificate title includes price information.
         """
-        assert certificate_title_data.type_price == 50
+        with tenant_context(tenant_a):
+            assert certificate_title_data.type_price == 50
 
 
 @pytest.mark.django_db
 class TestLocationHierarchy:
     """Test suite for location model relationships and hierarchy."""
 
-    def test_location_hierarchy_country_to_town(self, town_data):
+    def test_location_hierarchy_country_to_town(self, town_data, tenant_a):
         """
         Test the complete location hierarchy from country to town.
         """
-        assert town_data.county is not None
-        assert town_data.county.country is not None
-        assert town_data.county.country.name == "Mozambique"
+        with tenant_context(tenant_a):
+            assert town_data.county is not None
+            assert town_data.county.country is not None
+            assert town_data.county.country.name == "Mozambique"
 
-    def test_street_belongs_to_town(self, street_data):
+    def test_street_belongs_to_town(self, street_data, tenant_a):
         """
         Test that street correctly references its town.
         """
-        assert street_data.town is not None
-        assert street_data.town.name == "Trindade"
+        with tenant_context(tenant_a):
+            assert street_data.town is not None
+            assert street_data.town.name == "Trindade"
 
-    def test_house_belongs_to_street(self, house_data):
+    def test_house_belongs_to_street(self, house_data, tenant_a):
         """
         Test that house correctly references its street.
         """
-        assert house_data.street is not None
-        assert house_data.street.name == "Main Street"
+        with tenant_context(tenant_a):
+            assert house_data.street is not None
+            assert house_data.street.name == "Main Street"
 
-    def test_person_address_relationship(self, person_data):
+    def test_person_address_relationship(self, person_data, tenant_a):
         """
         Test that person correctly references their address.
         """
-        assert person_data.address is not None
-        assert person_data.address.house_number == "123"
+        with tenant_context(tenant_a):
+            assert person_data.address is not None
+            assert person_data.address.house_number == "123"
 
 
 @pytest.mark.django_db
@@ -453,12 +461,13 @@ class TestPersonBirthAddressAPI:
         response = client.post(url, data, format='json')
         assert response.status_code == status.HTTP_201_CREATED
 
-    def test_get_birth_addresses_list(self, api_client, person_birth_address_data):
+    def test_get_birth_addresses_list(self, staff_client, person_birth_address_data, tenant_a):
         """
         Test that birth addresses list is accessible.
         """
+        client_staff, _, _ = staff_client
         url = "/certificates/birthadddress"
-        response = api_client.get(url)
+        response = client_staff.get(url)
 
         assert response.status_code == status.HTTP_200_OK
 
@@ -467,60 +476,63 @@ class TestPersonBirthAddressAPI:
 class TestDataValidation:
     """Test suite for data validation in models."""
 
-    def test_person_requires_birth_date(db, person_birth_address_data,
-                                        id_type_data, instituition_data, house_data):
-        data = {
-            "name": "Test",
-            "surname": "User",
-            "gender": "M",
-            "id_number": "123456",
-            "id_type": id_type_data.id,
-            "id_issue_date": date.today(),
-            "id_issue_local": instituition_data.id,
-            "birth_address": person_birth_address_data.id,
-            "address": house_data.id,
-            "father_name": "Father",  # Added to pass your parent check
-            # "birth_date" is missing
-        }
+    def test_person_requires_birth_date(self, db, person_birth_address_data,
+                                        id_type_data, instituition_data, house_data, tenant_a):
+        with tenant_context(tenant_a):
+            data = {
+                "name": "Test",
+                "surname": "User",
+                "gender": "M",
+                "id_number": "123456",
+                "id_type": id_type_data.id,
+                "id_issue_date": date.today(),
+                "id_issue_local": instituition_data.id,
+                "birth_address": person_birth_address_data.id,
+                "address": house_data.id,
+                "father_name": "Father",  # Added to pass your parent check
+                # "birth_date" is missing
+            }
 
-        serializer = PersonCreateOrUpdateSerializer(data=data)
+            serializer = PersonCreateOrUpdateSerializer(data=data)
 
-        # This will now RAISE a ValidationError because of the extra_kwargs
-        assert serializer.is_valid() is False
-        assert 'birth_date' in serializer.errors
+            # This will now RAISE a ValidationError because of the extra_kwargs
+            assert serializer.is_valid() is False
+            assert 'birth_date' in serializer.errors
 
-    def test_certificate_requires_main_person(self, db, certificate_title_data):
+    def test_certificate_requires_main_person(self, db, certificate_title_data, tenant_a):
         """
         Test that certificate requires a main_person.
         """
-        certificate = Certificate(
-            # main_person is missing
-            type=certificate_title_data,
-            number="TEST-2026",
-            date_issue=date.today()
-        )
+        with tenant_context(tenant_a):
+            certificate = Certificate(
+                # main_person is missing
+                type=certificate_title_data,
+                number="TEST-2026",
+                date_issue=date.today()
+            )
 
-        # Use django.core.exceptions.ValidationError for specific testing
-        from django.core.exceptions import ValidationError
+            # Use django.core.exceptions.ValidationError for specific testing
+            from django.core.exceptions import ValidationError
 
-        with pytest.raises(ValidationError) as excinfo:
-            certificate.full_clean()
+            with pytest.raises(ValidationError) as excinfo:
+                certificate.full_clean()
 
-        # Optional: verify the error is on the correct field
-        assert 'main_person' in excinfo.value.message_dict
+            # Optional: verify the error is on the correct field
+            assert 'main_person' in excinfo.value.message_dict
 
-    def test_country_name_uniqueness(self, db, country_data):
+    def test_country_name_uniqueness(self, db, country_data, tenant_a):
         """
         Test that country name must be unique.
         """
-        from django.db import IntegrityError
+        with tenant_context(tenant_a):
+            from django.db import IntegrityError
 
-        with pytest.raises(IntegrityError):
-            Country.objects.create(
-                name="Mozambique",  # Same name as country_data
-                slug="mozambique",  # Same slug as country_data
-                code=999
-            )
+            with pytest.raises(IntegrityError):
+                Country.objects.create(
+                    name="Mozambique",  # Same name as country_data
+                    slug="mozambique",  # Same slug as country_data
+                    code=999
+                )
 
 
 @pytest.mark.django_db
@@ -643,7 +655,7 @@ class TestCertificateCreationNestedRoute:
 
     def test_create_certificate_type_enterro(self, staff_client, certificate_title_type_enterro,
                                              person_data, person_secondary_data, cemiterio_data,
-                                             available_grave, deceased_person_details):
+                                             available_grave, deceased_person_details, tenant_a):
         """
         Test creation of Type Enterro certificate (burial).
         Verifies plot recycling logic: closing an old grave and creating a new one.
@@ -671,22 +683,22 @@ class TestCertificateCreationNestedRoute:
 
         # 2. Assert Side Effect: Grave Recycling
         from certificates.models import Coval
+        with tenant_context(tenant_a):
+            # Verify the old grave is now closed
+            available_grave.refresh_from_db()
+            assert available_grave.closed is True
 
-        # Verify the old grave is now closed
-        available_grave.refresh_from_db()
-        assert available_grave.closed is True
+            # Verify a new grave record was created for the deceased
+            new_grave = Coval.objects.filter(
+                name=deceased_person_details.name,
+                date_of_deth=died_dt
+            ).first()
 
-        # Verify a new grave record was created for the deceased
-        new_grave = Coval.objects.filter(
-            name=deceased_person_details.name,
-            date_of_deth=died_dt
-        ).first()
-
-        assert new_grave is not None
-        assert new_grave.cemiterio == cemiterio_data
-        assert new_grave.square == available_grave.square
-        # Verify numbering format (count + 1 - year square)
-        assert f"-{date.today().year}" in new_grave.number
+            assert new_grave is not None
+            assert new_grave.cemiterio == cemiterio_data
+            assert new_grave.square == available_grave.square
+            # Verify numbering format (count + 1 - year square)
+            assert f"-{date.today().year}" in new_grave.number
 
     def test_create_certificate_type_coval(self, staff_client, certificate_title_type_coval,
                                            person_data, person_secondary_data, coval_data):
