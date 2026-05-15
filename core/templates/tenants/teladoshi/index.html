@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tela Doshi | Multi-tenant Marketplace Engine</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+  </head>
+  <body class="bg-slate-50 font-sans antialiased text-slate-900">
+    <header class="bg-slate-900 py-12 text-white border-b-4 border-blue-600">
+      <div class="container mx-auto px-6">
+        <div
+          class="flex flex-col md:flex-row items-center justify-between gap-6"
+        >
+          <div class="text-center md:text-left">
+            <span
+              class="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-[0.2em]"
+            >
+              Marketplace Integration Node
+            </span>
+            <h1
+              class="text-3xl md:text-4xl font-extrabold tracking-tighter italic mt-4 uppercase"
+            >
+              Tela Doshi <span class="text-blue-600">Core</span>
+            </h1>
+            <p
+              class="text-slate-400 mt-2 font-mono text-[10px] uppercase tracking-widest"
+            >
+              Service: STP_CONCIERGE_PRO • Status: ACID Verified
+            </p>
+          </div>
+          <div class="flex gap-4">
+            <a
+              href="/admin/"
+              class="bg-blue-600 hover:bg-blue-500 px-8 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all flex items-center shadow-lg shadow-blue-600/20"
+            >
+              <i class="fas fa-vault mr-2"></i> Tenant Admin
+            </a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="container mx-auto px-6 -mt-8">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div
+          class="lg:col-span-2 bg-white p-10 rounded-[3rem] shadow-xl border border-slate-100"
+        >
+          <div class="flex items-center gap-6 mb-8">
+            <div class="bg-blue-50 p-5 rounded-2xl text-blue-600">
+              <i class="fas fa-network-wired text-3xl"></i>
+            </div>
+            <div>
+              <h3
+                class="font-black text-2xl text-slate-800 uppercase tracking-tight"
+              >
+                Infrastructure & Isolation
+              </h3>
+              <p
+                class="text-blue-600 font-black text-[10px] uppercase tracking-widest italic"
+              >
+                Verified Tenant Middleware
+              </p>
+            </div>
+          </div>
+
+          <p class="text-slate-500 text-lg mb-8 leading-relaxed font-medium">
+            Proprietary module managing concurrent workflows for
+            <strong>Expeditions, Stays, and Fleet</strong>. Ensures 100% data
+            isolation for luxury operators via ACID-compliant schemas.
+          </p>
+
+          <div class="bg-slate-50 p-8 rounded-3xl border border-slate-100 mb-8">
+            <h4
+              class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-4"
+            >
+              Connected Frontend
+            </h4>
+            <div class="flex items-center justify-between">
+              <span class="font-mono text-xs font-bold text-slate-700"
+                >pure-st-tome.teladoshi.com</span
+              >
+              <a
+                href="/"
+                class="text-blue-600 hover:text-blue-800 font-black text-[10px] uppercase tracking-widest flex items-center"
+              >
+                Launch Portal <i class="fas fa-external-link-alt ml-2"></i>
+              </a>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap gap-4">
+            <a
+              href="/docs"
+              class="bg-slate-900 text-white px-10 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-blue-600 transition shadow-lg"
+            >
+              API Integration
+            </a>
+            <a
+              href="/swagger"
+              class="bg-white border border-slate-200 text-slate-600 px-10 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-slate-50 transition"
+            >
+              Technical Specs
+            </a>
+          </div>
+        </div>
+
+        <div class="space-y-6">
+          <div
+            class="bg-white p-8 rounded-[2.5rem] shadow-lg border border-slate-100"
+          >
+            <h4
+              class="font-black text-slate-800 mb-6 flex items-center uppercase text-sm tracking-tighter"
+            >
+              <i class="fas fa-shield-halved text-emerald-500 mr-3"></i>
+              Security Layer
+            </h4>
+            <ul
+              class="text-[10px] font-bold text-slate-500 space-y-4 uppercase tracking-widest"
+            >
+              <li class="flex items-start gap-3">
+                <i class="fas fa-circle-check text-emerald-500 mt-0.5"></i>
+                <span>Isolated Vendor Repositories</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-circle-check text-emerald-500 mt-0.5"></i>
+                <span>Encrypted Booking Handlers</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i class="fas fa-circle-check text-emerald-500 mt-0.5"></i>
+                <span>JWT Tenant Authentication</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="bg-blue-600 p-8 rounded-[2.5rem] shadow-lg text-white">
+            <p
+              class="text-[10px] font-black uppercase tracking-[0.3em] opacity-70"
+            >
+              Architect Note
+            </p>
+            <p class="text-sm mt-4 italic font-medium leading-relaxed">
+              "Engineered for high-security tourism environments, maintaining
+              99.9% uptime for the São Tomé travel circle."
+            </p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="mt-20 py-16 text-center bg-white border-t border-slate-100">
+      <p
+        class="text-[10px] font-black text-slate-300 uppercase tracking-[0.5em] mb-4"
+      >
+        Systems Architecture
+      </p>
+      <p
+        class="text-slate-900 font-black text-xl uppercase tracking-tighter italic"
+      >
+        Tela Doshi Engineering
+      </p>
+      <p
+        class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2"
+      >
+        Python, Django & React Marketplace Specialist
+      </p>
+    </footer>
+  </body>
+</html>
