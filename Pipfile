@@ -37,6 +37,7 @@ drf-spectacular = "*"
 django-tenants = "*"
 pytest = "*"
 pytest-django = "*"
+django-modeltranslation = "*"
 
 [dev-packages]
 factory-boy = "*"

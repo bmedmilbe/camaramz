@@ -18,7 +18,7 @@ def api_home(request):
 
     # connection.schema_name is automatically set by django-tenants middleware
     schema = connection.schema_name
-
+    print("print:", schema)
     if schema == 'public':
         return render(request, 'public/index.html')
 

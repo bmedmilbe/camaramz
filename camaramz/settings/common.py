@@ -2,6 +2,8 @@ import os
 from pathlib import Path
 from datetime import timedelta
 import socket
+from django.utils.translation import gettext_lazy as _
+
 # --- PATHS ---
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -17,6 +19,7 @@ INSTALLED_APPS = [
 ]
 
 SHARED_APPS = (
+    'modeltranslation',
     'django_tenants',  # mandatory
     'core',  # you must list the app where your tenant model resides in
 
@@ -39,22 +42,40 @@ SHARED_APPS = (
     "drf_spectacular",
 )
 
+LANGUAGES = (
+    ('pt', 'Portuguese'),
+    ('en', 'English'),
+)
+
+# 3. Choose the fallback language if a specific translation doesn't exist
+MODELTRANSLATION_DEFAULT_LANGUAGE = 'pt'
+MODELTRANSLATION_FALLBACK_LANGUAGES = ('pt', 'en')
+
 TENANT_APPS = (
     # your tenant-specific apps
 
     "cms",
     "certificates",
     "troca",
+    "teladoshi"
 )
 
 CLIENT_APPS_MODEL = "core.ClientApp"
 
 
 INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
+
+
 # --- TENANT ---
 TENANT_MODEL = "core.Client"  # app.Model
 
 TENANT_DOMAIN_MODEL = "core.Domain"  # app.Model
+
+
+# 1. Enable internationalization engine
+USE_I18N = True
+USE_TZ = True
+
 
 # --- MIDDLEWARE ---
 MIDDLEWARE = [
@@ -64,6 +85,7 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "core.middleware.TenantMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    'django.middleware.locale.LocaleMiddleware',
     "whitenoise.middleware.WhiteNoiseMiddleware",  # Handles local static files
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",

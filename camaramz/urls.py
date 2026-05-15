@@ -30,6 +30,7 @@ urlpatterns = [
     path("cms/", include("cms.urls")),
     path("certificates/", include("certificates.urls")),
     path("troca/", include("troca.urls")),
+    path("", include("teladoshi.urls")),
     path("setup/", include("setup.urls")),
     path("auth/", include("djoser.urls")),
     path("auth/", include("djoser.urls.jwt")),
