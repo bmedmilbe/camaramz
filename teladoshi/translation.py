@@ -1,30 +1,29 @@
 from modeltranslation.translator import register, TranslationOptions
-from .models import Expedition, Stay, Fleet, Restaurant, Place, Stopover, GuestStory
-
-
-@register(GuestStory)
-class GuestStoryTranslationOptions(TranslationOptions):
-    fields = ('content',)
+from .models import Expedition, Stay, Fleet, Restaurant, Place, Stopover
 
 
 @register(Expedition)
 class ExpeditionTranslationOptions(TranslationOptions):
-    fields = ('description', 'specialization', 'mastery_text')
+    # Added 'name'
+    fields = ('name', 'description', 'specialization', 'mastery_text')
 
 
 @register(Stay)
 class StayTranslationOptions(TranslationOptions):
-    fields = ('description', 'category', 'location_detail', 'amenities')
+    # Added 'name'
+    fields = ('name', 'description', 'category', 'location_detail', 'amenities')
 
 
 @register(Fleet)
 class FleetTranslationOptions(TranslationOptions):
-    fields = ('description',)
+    # Added 'name'
+    fields = ('name', 'description')
 
 
 @register(Restaurant)
 class RestaurantTranslationOptions(TranslationOptions):
-    fields = ('description', 'subtitle', 'location')
+    # Added 'name'
+    fields = ('name', 'description', 'subtitle', 'location')
 
 
 @register(Place)
