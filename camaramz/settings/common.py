@@ -57,7 +57,8 @@ TENANT_APPS = (
     "cms",
     "certificates",
     "troca",
-    "teladoshi"
+    "teladoshi",
+    "order",
 )
 
 CLIENT_APPS_MODEL = "core.ClientApp"

@@ -1,28 +1,22 @@
 from django.contrib import admin
+from django.contrib.contenttypes.admin import GenericTabularInline  # MANDATORY FOR GENERIC LINKS
 from modeltranslation.admin import TabbedTranslationAdmin
 from .models import (
-    Vendor, GuestStory, Expedition, Stay,
+    Vendor, Expedition, Stay,
     Fleet, Restaurant, Place, Stopover, ServiceImage
 )
 
-# --- INLINES ---
+# --- GENERIC INLINES ---
 
 
-class ServiceImageInline(admin.TabularInline):
+class ServiceImageInline(GenericTabularInline):
     """
-    Allows uploading multiple gallery images directly
-    within the Service admin page.
+    Allows uploading multiple gallery images directly within
+    ANY Service admin page using the ContentTypes framework.
     """
     model = ServiceImage
     extra = 3  # Provides 3 empty slots for new images by default
     fields = ('image', 'alt_text')
-
-
-class GuestStoryInline(admin.TabularInline):
-    """Allows managing testimonials directly inside the Service admin page."""
-    model = GuestStory
-    extra = 1
-    fields = ('author', 'content', 'rating')
 
 # --- ADMIN CLASSES ---
 
@@ -40,7 +34,7 @@ class ExpeditionAdmin(TabbedTranslationAdmin):
     list_filter = ('is_active', 'vendor')
     search_fields = ('name', 'specialization')
     prepopulated_fields = {"slug": ("name",)}
-    inlines = [ServiceImageInline, GuestStoryInline]  # Added ServiceImageInline
+    inlines = [ServiceImageInline]
     fieldsets = (
         ("Core Information", {"fields": ("vendor", "name", "slug", "price", "image", "is_active")}),
         ("Content", {"fields": ("description", "specialization", "badge_tags", "mastery_text")}),
@@ -53,7 +47,7 @@ class StayAdmin(TabbedTranslationAdmin):
     list_filter = ('is_active', 'vendor', 'category')
     search_fields = ('name', 'location_detail')
     prepopulated_fields = {"slug": ("name",)}
-    inlines = [ServiceImageInline, GuestStoryInline]  # Added ServiceImageInline
+    inlines = [ServiceImageInline]
 
 
 @admin.register(Fleet)
@@ -62,7 +56,7 @@ class FleetAdmin(TabbedTranslationAdmin):
     list_filter = ('is_active', 'vendor', 'transmission')
     search_fields = ('name', 'vehicle_type')
     prepopulated_fields = {"slug": ("name",)}
-    inlines = [ServiceImageInline]  # Added ServiceImageInline for car details
+    inlines = [ServiceImageInline]
 
 
 @admin.register(Restaurant)
@@ -71,7 +65,7 @@ class RestaurantAdmin(TabbedTranslationAdmin):
     list_filter = ('is_active', 'vendor')
     search_fields = ('name', 'location', 'subtitle')
     prepopulated_fields = {"slug": ("name",)}
-    inlines = [ServiceImageInline, GuestStoryInline]  # Added ServiceImageInline
+    inlines = [ServiceImageInline]
 
 
 @admin.register(Place)
@@ -79,7 +73,7 @@ class PlaceAdmin(TabbedTranslationAdmin):
     list_display = ('name', 'vendor', 'access_type', 'is_active')
     list_filter = ('is_active', 'vendor')
     prepopulated_fields = {"slug": ("name",)}
-    inlines = [ServiceImageInline]  # Added ServiceImageInline for location photos
+    inlines = [ServiceImageInline]
 
 
 @admin.register(Stopover)
@@ -88,18 +82,11 @@ class StopoverAdmin(TabbedTranslationAdmin):
     prepopulated_fields = {"slug": ("name",)}
 
 
-@admin.register(GuestStory)
-class GuestStoryAdmin(TabbedTranslationAdmin):
-    list_display = ('author', 'rating', 'get_linked_service')
-    list_filter = ('rating',)
-
-    def get_linked_service(self, obj):
-        return obj.expedition or obj.stay or obj.restaurant
-    get_linked_service.short_description = 'Linked Service'
-
-# Optional: Register ServiceImage separately if needed for bulk edits
-
+# --- OPTIONAL BULK MEDIA VIEW ---
 
 @admin.register(ServiceImage)
 class ServiceImageAdmin(admin.ModelAdmin):
-    list_display = ('id', 'alt_text', 'expedition', 'stay', 'restaurant', 'fleet')
+    # FIX: Replaced explicit service fields with generic tracking columns
+    list_display = ('id', 'alt_text', 'content_type', 'object_id', 'content_object')
+    list_filter = ('content_type',)
+    search_fields = ('alt_text',)

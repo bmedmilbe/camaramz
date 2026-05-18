@@ -9,6 +9,7 @@ router.register(r'stays', StayViewSet)
 router.register(r'fleet', FleetViewSet)
 router.register(r'restaurants', RestaurantViewSet)
 
+
 urlpatterns = [
-    path('api/v1/', include(router.urls)),
+    path('', include(router.urls)),
 ]
