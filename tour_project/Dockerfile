@@ -23,6 +23,7 @@ COPY core /app/core
 COPY tour_project/ /app/
 
 ENV DJANGO_SETTINGS_MODULE=camaramz.settings.prod
+ENV PYTHONPATH=/app
 RUN mkdir -p /app/staticfiles
 RUN SECRET_KEY=build-placeholder-123 python manage.py collectstatic --noinput
 
