@@ -29,4 +29,4 @@ RUN SECRET_KEY=build-placeholder-123 python manage.py collectstatic --noinput
 
 EXPOSE 8000
 
-CMD python manage.py migrate_schemas && gunicorn --bind 0.0.0.0:8000 camaramz.wsgi:application
+CMD python manage.py migrate_schemas && gunicorn --bind 0.0.0.0:${PORT:-8000} camaramz.wsgi:application
