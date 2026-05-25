@@ -7,7 +7,9 @@ DEBUG = False
 # Use .get() with a fallback to prevent crashes during the Docker build phase
 SECRET_KEY = os.environ.get("SECRET_KEY", "temporary-secret-key-for-build")
 ALLOWED_HOSTS = ["camaramzapi-6cf2b687304f.herokuapp.com", ".railway.app", ".up.railway.app",
-                 "xmambos.com", ".xmambos.com"
+                 "xmambos.com", ".xmambos.com",
+                 "tour-production.up.railway.app",
+
                  ]
 
 # --- CORS & CSRF CONFIGURATION ---
