@@ -1,3 +1,4 @@
 FROM nginx:alpine
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copy to templates instead of overwriting default.conf directly
+COPY local.conf /etc/nginx/templates/default.conf.template
 EXPOSE 80
