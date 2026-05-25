@@ -1,0 +1,25 @@
+{% block subject %} {{section}} - ORMED-STP {% endblock %}
+
+<!-- {% block text_body %}
+This is a long text body
+{% endblock %} -->
+
+{% block html_body %}
+<!DOCTYPE html>
+<html lang="pt-PT">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mensagem da ORMED-STP</title>
+  </head>
+
+  <body>
+    <p>
+      {{username}} com1 email: {{email}} escreveu a seguinte mensagem para si:
+    </p>
+    <hr />
+    <p>{{text}}</p>
+  </body>
+</html>
+{% endblock %}
