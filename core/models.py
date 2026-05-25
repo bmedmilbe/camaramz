@@ -71,17 +71,23 @@ class Client(TenantMixin):
 class Domain(DomainMixin):
     pass
 
+# 1. Define a helper function to fetch choices at runtime
+
 
 class ClientApp(models.Model):
+    APP_CHOICES = [
+        ('cms', 'Cms'),
+        ('certificates', 'Certificates'),
+        ('troca', 'Troca'),
+        ('teladoshi', 'Teladoshi'),
+        ('order', 'Order'),
+    ]
 
-    APP_CHOICES = [(app, app.split('.')[-1].title()) for app in settings.TENANT_APPS]
-
-    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name="client_apps")
-    app = models.CharField(choices=APP_CHOICES, max_length=100)
-    is_active = models.BooleanField(default=True)  # Good for toggling access
+    app = models.CharField(max_length=100, choices=APP_CHOICES)
+    client = models.ForeignKey('Client', on_delete=models.CASCADE, related_name="client_apps")
+    is_active = models.BooleanField(default=True)
 
     class Meta:
-        # Prevent the same app being added twice to the same tenant
         unique_together = ('client', 'app')
 
     def __str__(self):

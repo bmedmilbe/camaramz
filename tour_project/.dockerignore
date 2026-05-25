@@ -1,0 +1,46 @@
+# --- Critical: Ignore everything in these folders regardless of where they are ---
+**/.git
+**/.venv
+**/venv
+**/env
+**/__pycache__
+
+# --- Django Specific: Use wildcards to catch subdirectories ---
+**/media/
+**/static/
+**/static_root/
+**/staticfiles/
+**/backups/
+
+# --- Local Files & Database ---
+*.sqlite3
+*.log
+.env
+Dockerfile
+docker-compose.yml
+railway.json
+
+# --- System & IDE ---
+.vscode/
+.idea/
+**/.DS_Store
+**/*.Identifier
+
+backups/
+*.pyc
+/static/
+dev.py
+general.log
+*:Zone.Identifier
+
+docker-compose.yml
+
+.dockerignore
+
+backup_before_cleanup.sql
+backupo.sql
+backup-18.sql
+django_python_skills.txt
+backup-20.sql
+backup-08.sql
+tec.txt
