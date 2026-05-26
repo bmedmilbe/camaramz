@@ -137,6 +137,12 @@ DATABASE_ROUTERS = (
     'django_tenants.routers.TenantSyncRouter',
 )
 
+# Tells Django to trust the X-Forwarded-Host header sent by Nginx
+USE_X_FORWARDED_HOST = True
+
+# Secure cookies and protocols properly over Railway's SSL layer
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 # --- INTERNATIONALIZATION ---
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
@@ -145,8 +151,8 @@ USE_TZ = True
 
 # --- STATIC & MEDIA FILES ---
 STATIC_URL = "/static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"
-
+STATIC_ROOT = BASE_DIR / "tour_staticfiles"
+FORCE_SCRIPT_NAME = os.environ.get("FORCE_SCRIPT_NAME", None)
 MEDIA_URL = "/media/"
 
 MEDIA_ROOT = BASE_DIR / "media"

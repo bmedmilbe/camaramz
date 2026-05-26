@@ -120,6 +120,11 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
+# Tells Django to trust the X-Forwarded-Host header sent by Nginx
+USE_X_FORWARDED_HOST = True
+
+# Secure cookies and protocols properly over Railway's SSL layer
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 AUTHENTICATION_BACKENDS = [
     'core.backends.TenantEmailOrPhoneBackend',
@@ -137,8 +142,8 @@ USE_TZ = True
 
 # --- STATIC & MEDIA FILES ---
 STATIC_URL = "/static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"
-
+STATIC_ROOT = BASE_DIR / "certificates_staticfiles"
+FORCE_SCRIPT_NAME = os.environ.get("FORCE_SCRIPT_NAME", None)
 MEDIA_URL = "/media/"
 
 MEDIA_ROOT = BASE_DIR / "media"
