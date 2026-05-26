@@ -81,14 +81,19 @@ USE_TZ = True
 
 # --- MIDDLEWARE ---
 MIDDLEWARE = [
-    'django_tenants.middleware.main.TenantMainMiddleware',
+    # 1. First, normalize the proxy headers globally
+    "core.middleware.ProductionHostMiddleware",
+
+    # 2. Second, extract the tenant and execute the database schema switch context
+    "core.middleware.CoreTenantMiddleware",
+
+    # Remaining standard layers
     "debug_toolbar.middleware.DebugToolbarMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
-    "core.middleware.TenantMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     'django.middleware.locale.LocaleMiddleware',
-    "whitenoise.middleware.WhiteNoiseMiddleware",  # Handles local static files
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
