@@ -122,6 +122,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Tells Django to trust the X-Forwarded-Host header sent by Nginx
 USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_PORT = True
 
 # Secure cookies and protocols properly over Railway's SSL layer
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
