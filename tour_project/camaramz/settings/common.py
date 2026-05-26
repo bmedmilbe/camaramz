@@ -139,7 +139,7 @@ DATABASE_ROUTERS = (
 
 # Tells Django to trust the X-Forwarded-Host header sent by Nginx
 USE_X_FORWARDED_HOST = True
-USE_X_FORWARDED_PORT = True
+USE_X_FORWARDED_PORT = False
 
 # Secure cookies and protocols properly over Railway's SSL layer
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
