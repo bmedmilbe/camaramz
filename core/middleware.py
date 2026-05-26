@@ -7,7 +7,17 @@ class TenantMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        # Extract domain/host
+        # 1. FORCE OVERRIDE: Normalize headers using Nginx's forwarded domain
+        forwarded_host = request.META.get('HTTP_X_FORWARDED_HOST')
+        if forwarded_host:
+            # Strip out ports if any exist (e.g., "troca.xmambos.com:8001" -> "troca.xmambos.com")
+            clean_host = forwarded_host.split(':')[0]
+
+            # Rewrite request metadata globally so DRF uses this for absolute JSON URLs
+            request.META['HTTP_HOST'] = clean_host
+            request.META['SERVER_NAME'] = clean_host
+
+        # 2. Extract domain/host (Now guaranteed to use the clean forwarded domain)
         host = request.get_host().split(':')[0]  # Extract domain without port
 
         # For BOTH admin and API: Identify tenant from domain
