@@ -1,0 +1,15 @@
+Gateway / single-proxy architecture (Railway-like)
+
+Summary of changes applied for production gateway routing:
+
+- Single gateway container (Nginx) handles all incoming HTTP requests and proxies to backend Django services.
+- Routes added and normalized: requests to `/cms/`, `/tour/`, `/remittance/`, and `/certificates/` are explicitly redirected/normalized to trailing-slash URLs before proxying.
+- `gateway/local.conf` updated so the proxy accepts tenant subdomains (e.g. `cmz.localhost`, `cmz.teladoshi.com`) and matches incoming Host headers.
+- Docker Compose service URLs standardized (removed inconsistent trailing slashes) so Nginx path rewriting behaves predictably when proxying to upstreams.
+- Nginx forwards original browser headers to upstream services: `Host`, `X-Forwarded-Host`, and a custom `X-Tenant` header carrying tenant context. This preserves the original host and tenant info so tenant middleware can select the proper schema.
+- CMS kept as the default fallback service at `/` while the explicit paths (`/cms/`, `/tour/`, `/remittance/`, `/certificates/`) are routed to their respective backends.
+
+Notes:
+- These changes mirror the Railway production structure (gateway + services + shared Postgres) and match the local setup behaviour.
+- Production is currently returning `502 Bad Gateway`; the above changes were applied to align routing and header forwarding. Further debugging of upstream health, container ports, and Nginx upstream targets may be required to resolve the 502.
+
