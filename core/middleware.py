@@ -33,4 +33,11 @@ class ProxyPrefixMiddleware:
             # Dynamically set the script prefix for this specific request thread
             from django.urls import set_script_prefix
             set_script_prefix(prefix)
-        return self.get_response(request)
+
+        # 1. Let Django process the request and build the response
+        response = self.get_response(request)
+
+        # 2. Print the full absolute URL at the very end of the request
+        print(f"Final Request URL: {request.build_absolute_uri()}")
+
+        return response
