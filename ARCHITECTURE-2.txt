@@ -30,7 +30,8 @@ TLS / SSL upstream notes and action taken:
 
 - I found SSL handshake failures in the gateway logs: Nginx reported `SSL_do_handshake() failed` when connecting to upstream addresses like `https://66.33.22.187:443/`. This indicates Nginx could not complete TLS with the configured upstream (SNI/verification or protocol mismatch).
 - Applied fixes in `gateway/local.conf`:
-	- Enabled SNI for upstream connections with `proxy_ssl_server_name on;` and `proxy_ssl_name $host;` so the correct certificate is presented by upstreams that rely on SNI.
+	- Enabled SNI for upstream connections with `proxy_ssl_server_name on;` and `proxy_ssl_name $proxy_host;` so the correct certificate is presented by upstreams that rely on SNI.
+	- Changed `Host` to `$proxy_host` for upstream proxy requests while keeping the original browser host in `X-Forwarded-Host`. This avoids Railway proxy loops when the upstream endpoint is reached through a public custom domain.
 	- Relaxed upstream SSL verification (`proxy_ssl_verify off`) to avoid failures from self-signed or mismatched certs in internal networking (recommended only as a temporary/mechanical fix).
 	- Constrained TLS protocols (`proxy_ssl_protocols TLSv1.2 TLSv1.3`) and set reasonable `proxy_ssl_ciphers`.
 
