@@ -13,3 +13,37 @@ Notes:
 - These changes mirror the Railway production structure (gateway + services + shared Postgres) and match the local setup behaviour.
 - Production is currently returning `502 Bad Gateway`; the above changes were applied to align routing and header forwarding. Further debugging of upstream health, container ports, and Nginx upstream targets may be required to resolve the 502.
 
+Actions taken to fix 502 Bad Gateway (applied to `gateway/local.conf`):
+
+- Standardized proxy header forwarding to preserve the original browser host: switched `Host` and `X-Forwarded-Host` to `$http_host` so upstream Django receives the exact host (including port when present).
+- Added resilient proxy settings: `proxy_connect_timeout 5s`, `proxy_send_timeout 60s`, `proxy_read_timeout 60s`, and `proxy_next_upstream error timeout invalid_header http_502 http_503 http_504` to allow upstream retries on transient errors.
+- Kept trailing-slash behavior for prefix locations (`/cms/`, `/tour/`, `/remittance/`, `/certificates/`) so Nginx rewrites the path predictably when proxying to upstreams.
+- Preserved `X-Tenant` forwarding and added explicit `X-Forwarded-Prefix` headers for prefixed locations so tenant middleware can reconstruct effective paths.
+
+What to verify in production if 502 persists:
+
+- Check gateway Nginx logs (error and access) for connection refused, upstream timeouts, or DNS resolution failures.
+- Confirm the environment variables used by the gateway (`CMS_URL`, `TOUR_URL`, `REMITTANCE_URL`, `CERTIFICATES_URL`) resolve to reachable upstream addresses in Railway (internal service hostnames or public URLs) and include the correct ports.
+- Verify upstream services are listening on the expected ports and accepting connections from the gateway (health endpoints, container logs, and process status).
+- Ensure Railway networking / custom domain config points the domain to the gateway service and not directly to an unavailable upstream.
+TLS / SSL upstream notes and action taken:
+
+- I found SSL handshake failures in the gateway logs: Nginx reported `SSL_do_handshake() failed` when connecting to upstream addresses like `https://66.33.22.187:443/`. This indicates Nginx could not complete TLS with the configured upstream (SNI/verification or protocol mismatch).
+- Applied fixes in `gateway/local.conf`:
+	- Enabled SNI for upstream connections with `proxy_ssl_server_name on;` and `proxy_ssl_name $host;` so the correct certificate is presented by upstreams that rely on SNI.
+	- Relaxed upstream SSL verification (`proxy_ssl_verify off`) to avoid failures from self-signed or mismatched certs in internal networking (recommended only as a temporary/mechanical fix).
+	- Constrained TLS protocols (`proxy_ssl_protocols TLSv1.2 TLSv1.3`) and set reasonable `proxy_ssl_ciphers`.
+
+Recommended long-term actions:
+
+- Prefer using plain `http://` upstream URLs for internal service-to-service communication (no TLS) inside Railway/Docker unless services are configured with valid certs and SNI — update the gateway environment variables (`CMS_URL`, `TOUR_URL`, etc.) to `http://...` when possible.
+- If you must proxy to `https://` upstreams, ensure those upstream endpoints present valid certs for the expected SNI name and add the CA bundle to Nginx so `proxy_ssl_verify on;` can be used safely.
+
+I can now:
+
+- Check the gateway logs live for new errors after these changes.
+- Verify the gateway environment variables on Railway and update them to `http://` if appropriate.
+- Restart the gateway deployment to pick up the new template.
+
+Which of these would you like me to do next? (I can check logs first.)
+
