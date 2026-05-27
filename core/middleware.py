@@ -81,3 +81,21 @@ class TenantMiddleware:
             request.tenant = None
 
         return self.get_response(request)
+
+
+class URLPrintingMiddleware:
+    """
+    Executes last in the response cycle to print the final, fully-resolved URL.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        # 1. Let all other middleware and views finish executing
+        response = self.get_response(request)
+
+        # 2. Print the absolute URI after headers and prefixes are modified
+        print(f"Final Request URL: {request.build_absolute_uri()}")
+
+        return response

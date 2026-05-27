@@ -82,6 +82,7 @@ USE_TZ = True
 # --- MIDDLEWARE ---
 MIDDLEWARE = [
     # 1. First, normalize the proxy headers globally (Keep this!)
+    "core.middleware.URLPrintingMiddleware",
     "core.middleware.ProductionHostMiddleware",
     "core.middleware.ProxyPrefixMiddleware",
 
