@@ -3,7 +3,7 @@ import dj_database_url
 from .common import *
 
 # --- CORE SETTINGS ---
-DEBUG = False
+DEBUG = True
 # Use .get() with a fallback to prevent crashes during the Docker build phase
 SECRET_KEY = os.environ.get("SECRET_KEY", "temporary-secret-key-for-build")
 ALLOWED_HOSTS = ["teladoshi.com",      # Added explicitly
