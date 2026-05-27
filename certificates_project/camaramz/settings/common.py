@@ -74,11 +74,15 @@ USE_TZ = True
 # --- MIDDLEWARE ---
 MIDDLEWARE = [
     # 1. First, normalize the proxy headers globally (Keep this!)
+
+
+    "core.middleware.URLPrintingMiddleware",
     "core.middleware.ProductionHostMiddleware",
     "core.middleware.ProxyPrefixMiddleware",
 
     # 2. FIX: Replace your custom middleware with the official, thread-safe one
     "django_tenants.middleware.main.TenantMainMiddleware",
+    "core.middleware.TenantMiddleware",
 
     # Remaining standard layers
     "debug_toolbar.middleware.DebugToolbarMiddleware",
