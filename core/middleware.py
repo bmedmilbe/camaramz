@@ -62,6 +62,7 @@ class TenantMiddleware:
     """
     Identifies tenant from domain headers or Nginx-captured subdomain.
     Handles Railway's host header rewriting by falling back to X-Tenant header.
+    Restores original domain to request.META so build_absolute_uri() returns correct host.
     """
 
     def __init__(self, get_response):
@@ -72,6 +73,7 @@ class TenantMiddleware:
             return self.get_response(request)
 
         tenant = None
+        original_domain = None
 
         # Strategy 1: Try Host/X-Forwarded-Host (works if headers are preserved)
         host = request.META.get('HTTP_X_FORWARDED_HOST') or request.META.get('HTTP_HOST')
@@ -83,7 +85,12 @@ class TenantMiddleware:
             try:
                 domain_obj = Domain.objects.select_related('tenant').get(domain=host)
                 tenant = domain_obj.tenant
+                original_domain = domain_obj.domain
                 request.tenant = tenant
+                # Ensure request.get_host() returns the correct domain
+                request.META['HTTP_HOST'] = original_domain
+                request.META['SERVER_NAME'] = original_domain
+                request.META['HTTP_X_FORWARDED_HOST'] = original_domain
                 return self.get_response(request)
             except Domain.DoesNotExist:
                 pass
@@ -101,7 +108,12 @@ class TenantMiddleware:
                 ).first()
                 if domain_obj:
                     tenant = domain_obj.tenant
+                    original_domain = domain_obj.domain
                     request.tenant = tenant
+                    # CRITICAL: Restore the original domain so request.get_host() returns correct value
+                    request.META['HTTP_HOST'] = original_domain
+                    request.META['SERVER_NAME'] = original_domain
+                    request.META['HTTP_X_FORWARDED_HOST'] = original_domain
                     return self.get_response(request)
             except Exception:
                 pass
