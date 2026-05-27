@@ -87,6 +87,7 @@ MIDDLEWARE = [
 
     # 2. FIX: Replace your custom middleware with the official, thread-safe one
     "django_tenants.middleware.main.TenantMainMiddleware",
+    "core.middleware.TenantMiddleware",
 
     # Remaining standard layers
     "debug_toolbar.middleware.DebugToolbarMiddleware",

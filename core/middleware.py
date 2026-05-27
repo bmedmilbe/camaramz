@@ -1,5 +1,8 @@
 
 
+from .models import Domain
+
+
 class ProductionHostMiddleware:
     """
     Cleans up the request headers before django-tenants matches anything.
@@ -10,14 +13,26 @@ class ProductionHostMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        forwarded_host = request.META.get('HTTP_X_FORWARDED_HOST')
-        if forwarded_host:
-            if ',' in forwarded_host:
-                forwarded_host = forwarded_host.split(',')[0].strip()
-            clean_host = forwarded_host.split(':')[0]
+        host = request.META.get('HTTP_X_FORWARDED_HOST') or request.META.get('HTTP_HOST')
 
+        if host and ',' in host:
+            host = host.split(',')[0].strip()
+
+        if not host:
+            forwarded = request.META.get('HTTP_FORWARDED')
+            if forwarded:
+                for part in forwarded.split(';'):
+                    if '=' in part:
+                        name, value = part.strip().split('=', 1)
+                        if name.lower() == 'host':
+                            host = value.strip()
+                            break
+
+        if host:
+            clean_host = host.split(':')[0].strip().lower().rstrip('.')
             request.META['HTTP_HOST'] = clean_host
             request.META['SERVER_NAME'] = clean_host
+            request.META['HTTP_X_FORWARDED_HOST'] = clean_host
 
         return self.get_response(request)
 
@@ -41,3 +56,28 @@ class ProxyPrefixMiddleware:
         print(f"Final Request URL: {request.build_absolute_uri()}")
 
         return response
+
+
+class TenantMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if getattr(request, 'tenant', None):
+            return self.get_response(request)
+
+        host = request.META.get('HTTP_X_FORWARDED_HOST') or request.META.get('HTTP_HOST')
+        if host and ',' in host:
+            host = host.split(',')[0].strip()
+
+        if host:
+            host = host.split(':')[0].strip().lower()
+            try:
+                domain_obj = Domain.objects.select_related('tenant').get(domain=host)
+                request.tenant = domain_obj.tenant
+            except Domain.DoesNotExist:
+                request.tenant = None
+        else:
+            request.tenant = None
+
+        return self.get_response(request)
