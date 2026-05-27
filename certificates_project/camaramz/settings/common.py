@@ -73,18 +73,18 @@ USE_TZ = True
 
 # --- MIDDLEWARE ---
 MIDDLEWARE = [
-    # 1. First, normalize the proxy headers globally
+    # 1. First, normalize the proxy headers globally (Keep this!)
     "core.middleware.ProductionHostMiddleware",
 
-    # 2. Second, extract the tenant and execute the database schema switch context
-    "core.middleware.CoreTenantMiddleware",
+    # 2. FIX: Replace your custom middleware with the official, thread-safe one
+    "django_tenants.middleware.main.TenantMainMiddleware",
 
     # Remaining standard layers
     "debug_toolbar.middleware.DebugToolbarMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-    'django.middleware.locale.LocaleMiddleware',
+    "django.middleware.locale.LocaleMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -92,6 +92,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
 
 INTERNAL_IPS = [
     "127.0.0.1",
