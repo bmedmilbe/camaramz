@@ -59,6 +59,11 @@ class ProxyPrefixMiddleware:
 
 
 class TenantMiddleware:
+    """
+    Identifies tenant from domain headers or Nginx-captured subdomain.
+    Handles Railway's host header rewriting by falling back to X-Tenant header.
+    """
+
     def __init__(self, get_response):
         self.get_response = get_response
 
@@ -66,6 +71,9 @@ class TenantMiddleware:
         if getattr(request, 'tenant', None):
             return self.get_response(request)
 
+        tenant = None
+
+        # Strategy 1: Try Host/X-Forwarded-Host (works if headers are preserved)
         host = request.META.get('HTTP_X_FORWARDED_HOST') or request.META.get('HTTP_HOST')
         if host and ',' in host:
             host = host.split(',')[0].strip()
@@ -74,12 +82,32 @@ class TenantMiddleware:
             host = host.split(':')[0].strip().lower()
             try:
                 domain_obj = Domain.objects.select_related('tenant').get(domain=host)
-                request.tenant = domain_obj.tenant
+                tenant = domain_obj.tenant
+                request.tenant = tenant
+                return self.get_response(request)
             except Domain.DoesNotExist:
-                request.tenant = None
-        else:
-            request.tenant = None
+                pass
 
+        # Strategy 2: Fall back to X-Tenant header (Nginx regex capture from domain)
+        # e.g., Nginx captures 'troca' from 'troca.teladoshi.com' and sets X-Tenant: troca
+        tenant_subdomain = request.META.get('HTTP_X_TENANT')
+        if tenant_subdomain:
+            tenant_subdomain = tenant_subdomain.strip().lower()
+            # Find any domain that starts with this subdomain
+            # e.g., find 'troca.teladoshi.com' or 'troca.xmambos.com'
+            try:
+                domain_obj = Domain.objects.select_related('tenant').filter(
+                    domain__startswith=tenant_subdomain
+                ).first()
+                if domain_obj:
+                    tenant = domain_obj.tenant
+                    request.tenant = tenant
+                    return self.get_response(request)
+            except Exception:
+                pass
+
+        # If both strategies fail, set tenant to None
+        request.tenant = None
         return self.get_response(request)
 
 
