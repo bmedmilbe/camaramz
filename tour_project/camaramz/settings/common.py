@@ -83,6 +83,7 @@ USE_TZ = True
 MIDDLEWARE = [
     # 1. First, normalize the proxy headers globally (Keep this!)
     "core.middleware.ProductionHostMiddleware",
+    "core.middleware.ProxyPrefixMiddleware",
 
     # 2. FIX: Replace your custom middleware with the official, thread-safe one
     "django_tenants.middleware.main.TenantMainMiddleware",
@@ -145,6 +146,7 @@ DATABASE_ROUTERS = (
 
 # Tells Django to trust the X-Forwarded-Host header sent by Nginx
 USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_SETUP = True
 USE_X_FORWARDED_PORT = False
 
 # Secure cookies and protocols properly over Railway's SSL layer

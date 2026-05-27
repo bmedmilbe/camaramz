@@ -27,8 +27,8 @@ admin.site.index_title = "Admin Panel"
 urlpatterns = [
     path("", include("core.urls")),
     path("admin/", admin.site.urls),
-    path("api/teladoshi/", include("teladoshi.urls")),
-    path('api/order/', include('order.urls')),
+    path("", include("teladoshi.urls")),
+    path('', include('order.urls')),
     path("setup/", include("setup.urls")),
     path("auth/", include("djoser.urls")),
     path("auth/", include("djoser.urls.jwt")),

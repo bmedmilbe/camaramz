@@ -1,17 +1,15 @@
 server {
     listen 80;
-    server_name xmambos.com teladoshi.com ~^(?<tenant>.+)\\.xmambos\\.(local|com)$ ~^(?<tenant>.+)\\.teladoshi\\.(local|com)$ ~^(?<tenant>.+)\\..+$;
+    server_name xmambos.com teladoshi.com ~^(?<tenant>.+)\.xmambos\.(local|com)$ ~^(?<tenant>.+)\.teladoshi\.(local|com)$ ~^(?<tenant>.+)\..+$;
 
     resolver 127.0.0.11 8.8.8.8 valid=30s;
 
     location /certificates/ {
-        proxy_pass ${CERTIFICATES_URL}/; # Added trailing slash
-        proxy_set_header Host $http_host; # Changed from $proxy_host
+        proxy_pass ${CERTIFICATES_URL};
+        proxy_set_header Host $http_host; # FIX: Retain original browser domain
         
         proxy_ssl_server_name on;
         proxy_ssl_name $proxy_host;
-
-        proxy_set_header X-Forwarded-Prefix /certificates/;
         
         proxy_set_header X-Forwarded-Host $http_host;
         proxy_set_header X-Tenant $tenant;
@@ -21,13 +19,11 @@ server {
     }
 
     location /remittance/ {
-        proxy_pass ${REMITTANCE_URL}/; # Added trailing slash
-        proxy_set_header Host $http_host; # Changed from $proxy_host
+        proxy_pass ${REMITTANCE_URL};
+        proxy_set_header Host $http_host; # FIX: Retain original browser domain
         
         proxy_ssl_server_name on;
         proxy_ssl_name $proxy_host;
-
-        proxy_set_header X-Forwarded-Prefix /remittance/;
         
         proxy_set_header X-Forwarded-Host $http_host;
         proxy_set_header X-Tenant $tenant;
@@ -37,13 +33,11 @@ server {
     }
 
     location /tour/ {
-        proxy_pass ${TOUR_URL}/; # Added trailing slash
-        proxy_set_header Host $http_host; # Changed from $proxy_host
+        proxy_pass ${TOUR_URL};
+        proxy_set_header Host $http_host; # FIX: Retain original browser domain
         
         proxy_ssl_server_name on;
         proxy_ssl_name $proxy_host;
-
-        proxy_set_header X-Forwarded-Prefix /tour/;
         
         proxy_set_header X-Forwarded-Host $http_host;
         proxy_set_header X-Tenant $tenant;
@@ -53,15 +47,10 @@ server {
     }
 
     location /cms/ {
-        proxy_pass ${CMS_URL}/; # Added trailing slash
+        proxy_pass ${CMS_URL}; # No trailing slash!
         proxy_set_header Host $http_host;
-        
         proxy_ssl_server_name on;
         proxy_ssl_name $proxy_host;
-
-        proxy_set_header X-Forwarded-Prefix /cms/;
-
-        
         proxy_set_header X-Forwarded-Host $http_host;
         proxy_set_header X-Tenant $tenant;
         proxy_set_header X-Real-IP $remote_addr;
@@ -71,11 +60,11 @@ server {
 
     location / {
         proxy_pass ${CMS_URL};
-        proxy_set_header Host $http_host;
+        proxy_set_header Host $http_host; # FIX: Retain original browser domain
         
         proxy_ssl_server_name on;
         proxy_ssl_name $proxy_host;
-        
+
         proxy_set_header X-Forwarded-Host $http_host;
         proxy_set_header X-Tenant $tenant;
         proxy_set_header X-Real-IP $remote_addr;
