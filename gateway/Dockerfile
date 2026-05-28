@@ -2,9 +2,14 @@ FROM nginx:alpine
 
 ARG CACHE_BYPASS=1 
 
-# Copy to templates instead of overwriting default.conf directly
+# 1. Clear out the default configuration so it doesn't conflict
+RUN rm -f /etc/nginx/conf.d/default.conf
+
+# 2. Copy your template to the templates directory
 COPY local.conf /etc/nginx/templates/default.conf.template
 
-CMD ["/bin/sh", "-c", "envsubst '$CERTIFICATES_URL $REMITTANCE_URL $TOUR_URL $CMS_URL' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
+# 3. Clean up the CMD. The official Nginx image automatically runs envsubst 
+#    on any .template file in that directory and starts the server natively.
+CMD ["nginx", "-g", "daemon off;"]
 
 EXPOSE 80
