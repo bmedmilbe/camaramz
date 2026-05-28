@@ -2,14 +2,16 @@ FROM nginx:alpine
 
 ARG CACHE_BYPASS=1 
 
-# 1. Clear out the default configuration so it doesn't conflict
+# 1. Clean out the out-of-the-box file completely
 RUN rm -f /etc/nginx/conf.d/default.conf
 
-# 2. Copy your template to the templates directory
-COPY local.conf /etc/nginx/templates/default.conf.template
+# 2. FIX: Rename this to local.conf.template. 
+# This outputs to /etc/nginx/conf.d/local.conf, completely avoiding default.conf conflicts.
+COPY local.conf /etc/nginx/templates/local.conf.template
 
-# 3. Clean up the CMD. The official Nginx image automatically runs envsubst 
-#    on any .template file in that directory and starts the server natively.
+# 3. Environment variable telling Nginx entrypoint NOT to try modifying ports on its own
+ENV NGINX_ENTRYPOINT_LOCAL_RESOLVERS=1
+
 CMD ["nginx", "-g", "daemon off;"]
 
 EXPOSE 80
