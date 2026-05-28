@@ -25,17 +25,17 @@ admin.site.index_title = "Admin Panel"
 
 
 urlpatterns = [
-    path("", include("core.urls")),
-    path("admin/", admin.site.urls),
-    path("api/", include("troca.urls")),
-    path("setup/", include("setup.urls")),
-    path("auth/", include("djoser.urls")),
-    path("auth/", include("djoser.urls.jwt")),
-    path('schema/', SpectacularAPIView.as_view(), name='schema'),
-    path('swagger/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
-    path('redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
+    path("remittance/", include("core.urls")),
+    path("remittance/admin/", admin.site.urls),
+    path("remittance/api/", include("troca.urls")),
+    path("remittance/setup/", include("setup.urls")),
+    path("remittance/auth/", include("djoser.urls")),
+    path("remittance/auth/", include("djoser.urls.jwt")),
+    path('remittance/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('remittance/swagger/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('remittance/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 
-    path("__debug__/", include("debug_toolbar.urls")),
+    path("remittance/__debug__/", include("debug_toolbar.urls")),
 ]
 
 if settings.DEBUG:

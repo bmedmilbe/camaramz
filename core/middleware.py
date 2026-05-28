@@ -34,19 +34,27 @@ class ProxyPrefixMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        # Read the prefix header sent by Nginx
+        # Ler o cabeçalho enviado pelo Nginx (ex: /remittance)
         prefix = request.META.get('HTTP_X_FORWARDED_PREFIX')
+
         if prefix:
-            # Dynamically set the script prefix for this specific request thread
+            # 1. Informa o Django sobre o prefixo para que ele gere URLs invertidos (reverse) corretos
             from django.urls import set_script_prefix
             set_script_prefix(prefix)
 
-        # 1. Let Django process the request and build the response
+            # 2. FIX CRITICAL: Remove o prefixo do caminho interno para que o urls.py faça Match com "" ou "api/"
+            if request.path.startswith(prefix):
+                request.path = request.path[len(prefix):]
+            if request.path_info.startswith(prefix):
+                request.path_info = request.path_info[len(prefix):]
+
+            # Garante que caminhos vazios viram pelo menos "/" para evitar falhas de Match
+            if not request.path.startswith('/'):
+                request.path = '/' + request.path
+            if not request.path_info.startswith('/'):
+                request.path_info = '/' + request.path_info
+
         response = self.get_response(request)
-
-        # 2. Print the full absolute URL at the very end of the request
-        print(f"Final Request URL: {request.build_absolute_uri()}")
-
         return response
 
 
