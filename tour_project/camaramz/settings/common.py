@@ -152,7 +152,7 @@ USE_X_FORWARDED_SETUP = True
 USE_X_FORWARDED_PORT = False
 
 # Secure cookies and protocols properly over Railway's SSL layer
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # --- INTERNATIONALIZATION ---
 LANGUAGE_CODE = "en-us"

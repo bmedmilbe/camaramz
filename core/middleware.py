@@ -13,23 +13,15 @@ class ProductionHostMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
+        # Read X-Forwarded-Host (sent by Nginx) first
         host = request.META.get('HTTP_X_FORWARDED_HOST') or request.META.get('HTTP_HOST')
 
         if host and ',' in host:
             host = host.split(',')[0].strip()
 
-        if not host:
-            forwarded = request.META.get('HTTP_FORWARDED')
-            if forwarded:
-                for part in forwarded.split(';'):
-                    if '=' in part:
-                        name, value = part.strip().split('=', 1)
-                        if name.lower() == 'host':
-                            host = value.strip()
-                            break
-
         if host:
             clean_host = host.split(':')[0].strip().lower().rstrip('.')
+            # Make absolutely sure Django's core and tenant identification sees the original custom domain
             request.META['HTTP_HOST'] = clean_host
             request.META['SERVER_NAME'] = clean_host
             request.META['HTTP_X_FORWARDED_HOST'] = clean_host
