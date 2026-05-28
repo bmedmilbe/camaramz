@@ -86,75 +86,77 @@ class TenantMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        # FIX: Instead of short-circuiting and re-calling get_response dynamically,
-        # we check if a tenant was already bound. If it was, we just ensure the DB
-        # connection is locked to it and let the request naturally proceed.
-        tenant = getattr(request, 'tenant', None)
+        # Short-circuit if the tenant has already been resolved in the current request cycle
+        if getattr(request, 'tenant', None):
+            return self.get_response(request)
+
+        host = request.META.get('HTTP_X_FORWARDED_HOST') or request.META.get('HTTP_HOST')
+        if host and ',' in host:
+            host = host.split(',')[0].strip()
+
+        tenant = None
         original_domain = None
 
+        # --- STRATEGY 1: Exact Match Lookup against Domain table ---
+        if host:
+            host = host.split(':')[0].strip().lower()
+            try:
+                domain_obj = Domain.objects.select_related('tenant').get(domain=host)
+                tenant = domain_obj.tenant
+                original_domain = domain_obj.domain
+            except Domain.DoesNotExist:
+                pass
+
+        # --- STRATEGY 2: Dynamic Subdomain Prefix Filter ---
         if not tenant:
-            host = request.META.get('HTTP_X_FORWARDED_HOST') or request.META.get('HTTP_HOST')
-            if host and ',' in host:
-                host = host.split(',')[0].strip()
-
-            # --- STRATEGY 1: Exact Match Lookup against Domain table ---
-            if host:
-                host = host.split(':')[0].strip().lower()
+            tenant_subdomain = request.META.get('HTTP_X_TENANT')
+            if tenant_subdomain and tenant_subdomain != '$tenant':
+                tenant_subdomain = tenant_subdomain.strip().lower()
                 try:
-                    domain_obj = Domain.objects.select_related('tenant').get(domain=host)
-                    tenant = domain_obj.tenant
-                    original_domain = domain_obj.domain
-                except Domain.DoesNotExist:
+                    domain_obj = Domain.objects.select_related('tenant').filter(
+                        domain__startswith=tenant_subdomain
+                    ).first()
+                    if domain_obj:
+                        tenant = domain_obj.tenant
+                        original_domain = domain_obj.domain
+                except Exception as e:
+                    logger.error(f"Tenant Strategy 2 resolution error: {e}")
+
+        # --- STRATEGY 3 (CRITICAL FALLBACK): Direct Tenant Model Lookup ---
+        # If the domain table is empty or missing records, but a valid X-Tenant subdomain
+        # is provided by Nginx, bypass the Domain mapping and lookup the schema directly.
+        if not tenant:
+            tenant_subdomain = request.META.get('HTTP_X_TENANT')
+            if tenant_subdomain and tenant_subdomain != '$tenant':
+                tenant_subdomain = tenant_subdomain.strip().lower()
+                try:
+                    TenantModel = get_tenant_model()
+                    tenant = TenantModel.objects.get(schema_name=tenant_subdomain)
+                    original_domain = f"{tenant_subdomain}.teladoshi.com"
+                except TenantModel.DoesNotExist:
                     pass
-
-            # --- STRATEGY 2: Dynamic Subdomain Prefix Filter ---
-            if not tenant:
-                tenant_subdomain = request.META.get('HTTP_X_TENANT')
-                if tenant_subdomain and tenant_subdomain != '$tenant':
-                    tenant_subdomain = tenant_subdomain.strip().lower()
-                    try:
-                        domain_obj = Domain.objects.select_related('tenant').filter(
-                            domain__startswith=tenant_subdomain
-                        ).first()
-                        if domain_obj:
-                            tenant = domain_obj.tenant
-                            original_domain = domain_obj.domain
-                    except Exception as e:
-                        logger.error(f"Tenant Strategy 2 resolution error: {e}")
-
-            # --- STRATEGY 3 (CRITICAL FALLBACK): Direct Tenant Model Lookup ---
-            if not tenant:
-                tenant_subdomain = request.META.get('HTTP_X_TENANT')
-                if tenant_subdomain and tenant_subdomain != '$tenant':
-                    tenant_subdomain = tenant_subdomain.strip().lower()
-                    try:
-                        TenantModel = get_tenant_model()
-                        tenant = TenantModel.objects.get(schema_name=tenant_subdomain)
-                        original_domain = f"{tenant_subdomain}.teladoshi.com"
-                    except TenantModel.DoesNotExist:
-                        pass
-                    except Exception as e:
-                        logger.error(f"Critical Tenant Fallback execution error: {e}")
+                except Exception as e:
+                    logger.error(f"Critical Tenant Fallback execution error: {e}")
 
         # --- TENANT BINDING & PHYSICAL DATA ISOLATION LOCK ---
         if tenant:
-            # Bind the tenant instance safely
+            # Bind the tenant instance to the current execution thread request object
             request.tenant = tenant
 
             # HARD LOCK: Force the PostgreSQL database connection to switch to the isolated tenant schema
             connection.set_tenant(request.tenant)
 
-            # Only override headers if we actually resolved a fresh domain string
-            if original_domain:
-                request.META['HTTP_HOST'] = original_domain
-                request.META['SERVER_NAME'] = original_domain
-                request.META['HTTP_X_FORWARDED_HOST'] = original_domain
+            # Re-inject the original mapped domain to preserve the integrity of request.build_absolute_uri()
+            request.META['HTTP_HOST'] = original_domain
+            request.META['SERVER_NAME'] = original_domain
+            request.META['HTTP_X_FORWARDED_HOST'] = original_domain
 
             return self.get_response(request)
         else:
             # SECURITY BLOCK: Drop the request immediately if no valid tenant is found.
+            # Prevents routing leakage into the 'public' database schema.
             logger.warning(
-                f"Access Denied: Unmapped tenant route for X-Tenant '{request.META.get('HTTP_X_TENANT')}'"
+                f"Access Denied: Unmapped tenant route for Host '{host}' or X-Tenant '{request.META.get('HTTP_X_TENANT')}'"
             )
             raise Http404("Tenant not found or access unauthorized.")
 
