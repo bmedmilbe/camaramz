@@ -39,6 +39,9 @@ CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS + [
     "https://xmambos.com",
     "https://www.xmambos.com",
     "https://*.xmambos.com",
+    "https://www.teladoshi.com",
+    "https://teladoshi.com",
+    "https://*.teladoshi.com",
 
 ]
 
