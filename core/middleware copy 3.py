@@ -34,12 +34,6 @@ class ProductionHostMiddleware:
             # Remove custom ports and strip trailing dots
             clean_host = host.split(':')[0].strip().lower().rstrip('.') if host else 'teladoshi.com'
 
-        # -----------------------------------------------------------------
-        # FORCE REWRITE FOR RAILWAY INTERNAL HOST (Nginx $proxy_host bypass)
-        # -----------------------------------------------------------------
-        if clean_host == 'cms-production-35e8.up.railway.app':
-            clean_host = 'teladoshi.com'
-
         # Inject the sanitized host back into request.META for native Django components
         request.META['HTTP_HOST'] = clean_host
         request.META['SERVER_NAME'] = clean_host
