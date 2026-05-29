@@ -1,5 +1,4 @@
 import logging
-import os
 from django.db import connection
 from django.http import Http404
 from django_tenants.utils import get_tenant_model
@@ -76,10 +75,20 @@ class ProxyPrefixMiddleware:
 
 
 class TenantMiddleware:
+    """
+    DATA ISOLATION ENFORCEMENT MIDDLEWARE.
+    Resolves the active tenant using multi-layered routing fallback strategies.
+    Explicitly forces the active PostgreSQL connection to use the tenant's isolated schema.
+    Blocks orphaned or unauthorized requests with an immediate 404 response to guard the public schema.
+    """
+
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
+        # FIX: Instead of short-circuiting and re-calling get_response dynamically,
+        # we check if a tenant was already bound. If it was, we just ensure the DB
+        # connection is locked to it and let the request naturally proceed.
         tenant = getattr(request, 'tenant', None)
         original_domain = None
 
@@ -113,7 +122,7 @@ class TenantMiddleware:
                     except Exception as e:
                         logger.error(f"Tenant Strategy 2 resolution error: {e}")
 
-            # --- STRATEGY 3: Direct Tenant Model Lookup ---
+            # --- STRATEGY 3 (CRITICAL FALLBACK): Direct Tenant Model Lookup ---
             if not tenant:
                 tenant_subdomain = request.META.get('HTTP_X_TENANT')
                 if tenant_subdomain and tenant_subdomain != '$tenant':
@@ -127,21 +136,15 @@ class TenantMiddleware:
                     except Exception as e:
                         logger.error(f"Critical Tenant Fallback execution error: {e}")
 
-            # --- STRATEGY 4 (NEW): ROOT DOMAIN PUBLIC SCHEMA FALLBACK ---
-            if not tenant and host in ['teladoshi.com', 'xmambos.com']:
-                try:
-                    TenantModel = get_tenant_model()
-                    tenant = TenantModel.objects.get(schema_name='public')
-                    original_domain = host
-                except TenantModel.DoesNotExist:
-                    logger.error("Public tenant schema record missing in database.")
-                    pass
-
         # --- TENANT BINDING & PHYSICAL DATA ISOLATION LOCK ---
         if tenant:
+            # Bind the tenant instance safely
             request.tenant = tenant
+
+            # HARD LOCK: Force the PostgreSQL database connection to switch to the isolated tenant schema
             connection.set_tenant(request.tenant)
 
+            # Only override headers if we actually resolved a fresh domain string
             if original_domain:
                 request.META['HTTP_HOST'] = original_domain
                 request.META['SERVER_NAME'] = original_domain
@@ -149,9 +152,9 @@ class TenantMiddleware:
 
             return self.get_response(request)
         else:
-            # SECURITY BLOCK
+            # SECURITY BLOCK: Drop the request immediately if no valid tenant is found.
             logger.warning(
-                f"Access Denied: Unmapped tenant route for Host '{host}' / X-Tenant '{request.META.get('HTTP_X_TENANT')}'"
+                f"Access Denied: Unmapped tenant route for X-Tenant '{request.META.get('HTTP_X_TENANT')}'"
             )
             raise Http404("Tenant not found or access unauthorized.")
 
